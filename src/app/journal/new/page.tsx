@@ -128,15 +128,18 @@ export default function NewJournal() {
     }
   }
 
+  function getKey() { return localStorage.getItem("odyssey_api_key") || apiKey; }
+
   async function startGuidedSession() {
-    if (!apiKey) { setError("请先在设置里填写 DeepSeek 密钥"); return; }
+    const key = getKey();
+    if (!key) { setError("请先在设置里填写 DeepSeek 密钥"); return; }
     setGuideLoading(true);
     try {
       const ctx = lastSavedContent ? lastSavedContent.slice(0, 600) : "";
       const prompt = ctx
         ? `我刚才记录了这样一段想法：「${ctx}」。请以我内心深处另一个自己的身份，基于我刚才的这段记录，向我提出一个开放性的追问，引导我继续深挖。不要泛泛而谈，要具体针对我刚才说的内容。语气温柔、好奇、不带评判。`
         : "请以我内心深处另一个自己的身份，向我提出一个开放性的问题。要温柔、好奇、不带评判，引导我探索此刻的内心。";
-      const { reply } = await chatWithAI(prompt, apiKey);
+      const { reply } = await chatWithAI(prompt, key);
       const msgs: { role: string; content: string }[] = [];
       if (ctx) msgs.push({ role: "user", content: ctx });
       msgs.push({ role: "assistant", content: reply });
@@ -149,7 +152,8 @@ export default function NewJournal() {
   }
 
   async function sendGuideMessage() {
-    if (!guideInput.trim() || !apiKey) return;
+    const key = getKey();
+    if (!guideInput.trim() || !key) return;
     const userMsg = guideInput.trim();
     setGuideInput("");
     const updated = [...guideMessages, { role: "user", content: userMsg }];
@@ -159,7 +163,7 @@ export default function NewJournal() {
     try {
       const ctx = lastSavedContent ? `最初的记录：「${lastSavedContent.slice(0, 600)}」\n\n` : "";
       const prompt = `${ctx}之前的对话：\n${updated.map((m) => (m.role === "assistant" ? "内心：" : "我：") + m.content).join("\n")}\n\n请继续以我内心另一个自己的身份回应我。可以先简短回应，然后继续提问引导我深入思考。紧扣最初记录的主题。`;
-      const { reply } = await chatWithAI(prompt, apiKey);
+      const { reply } = await chatWithAI(prompt, key);
       setGuideMessages([...updated, { role: "assistant", content: reply }]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "连接失败");
