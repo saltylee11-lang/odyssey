@@ -29,7 +29,6 @@ interface EntryData {
 export default function Timeline() {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>(0);
 
   const [profile, setProfile] = useState<{ name: string; birthdate: string } | null>(null);
   const [totalDays, setTotalDays] = useState(0);
@@ -123,33 +122,24 @@ export default function Timeline() {
     requestAnimationFrame(() => tryScroll(20));
   }, [loading, totalDays]);
 
-  // Throttled scroll handler — only active when user manually scrolls
   const handleScroll = useCallback(() => {
-    if (rafRef.current || isAutoScrolling.current) return;
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = 0;
-      if (!scrollRef.current || isAutoScrolling.current) return;
-      const scrollLeft = scrollRef.current.scrollLeft;
-      const viewWidth = scrollRef.current.clientWidth;
-      const centerScroll = scrollLeft + viewWidth / 2;
-      const rawIdx = Math.round(centerScroll / TICK_WIDTH - VISIBLE_DAYS);
-      const dayIdx = Math.max(1, rawIdx);
+    if (!scrollRef.current) return;
+    const scrollLeft = scrollRef.current.scrollLeft;
+    const viewWidth = scrollRef.current.clientWidth;
+    const centerScroll = scrollLeft + viewWidth / 2;
+    const dayIdx = Math.max(1, Math.round(centerScroll / TICK_WIDTH - VISIBLE_DAYS));
 
-      if (dayIdx !== selectedDayRef.current) {
-        selectedDayRef.current = dayIdx;
-        setSelectedDay(dayIdx);
-        setSelectedEntries(entriesByDay.current.get(dayIdx) ?? []);
-        if (navigator.vibrate && entriesByDay.current.has(dayIdx)) {
-          navigator.vibrate(5);
-        }
-      }
+    if (dayIdx !== selectedDayRef.current) {
+      selectedDayRef.current = dayIdx;
+      setSelectedDay(dayIdx);
+      setSelectedEntries(entriesByDay.current.get(dayIdx) ?? []);
+    }
 
-      // Update visible range (with larger threshold to minimize re-renders)
-      const startVisible = Math.max(1, Math.floor(scrollLeft / TICK_WIDTH - VISIBLE_DAYS - BUFFER_DAYS));
-      const endVisible = Math.ceil((scrollLeft + viewWidth) / TICK_WIDTH + BUFFER_DAYS);
-      setVisStart((prev) => Math.abs(prev - startVisible) > 50 ? startVisible : prev);
-      setVisEnd((prev) => Math.abs(prev - endVisible) > 50 ? endVisible : prev);
-    });
+    // Update visible range
+    const startVisible = Math.max(1, Math.floor(scrollLeft / TICK_WIDTH - VISIBLE_DAYS - BUFFER_DAYS));
+    const endVisible = Math.ceil((scrollLeft + viewWidth) / TICK_WIDTH + BUFFER_DAYS);
+    setVisStart((prev) => Math.abs(prev - startVisible) > 80 ? startVisible : prev);
+    setVisEnd((prev) => Math.abs(prev - endVisible) > 80 ? endVisible : prev);
   }, []);
 
   if (!mounted) return null;
