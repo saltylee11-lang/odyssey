@@ -105,8 +105,7 @@ export default function Timeline() {
     setSelectedDay(totalDays);
     setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
 
-    // Use scrollTo if possible, but accept it might be imprecise
-    scrollRef.current.scrollTo({ left: Math.max(0, targetLeft), behavior: "instant" });
+    scrollRef.current.scrollLeft = Math.max(0, targetLeft);
 
     // After scroll settles, force-correct to today regardless of scroll position
     const settleTimer = setTimeout(() => {
@@ -165,7 +164,7 @@ export default function Timeline() {
     selectedDayRef.current = target;
     setSelectedDay(target);
     setSelectedEntries(entriesByDay.current.get(target) ?? []);
-    scrollRef.current.scrollTo({ left: Math.max(0, targetLeft), behavior: "instant" });
+    scrollRef.current.scrollLeft = Math.max(0, targetLeft);
     // Force correct after scroll animation ends
     setTimeout(() => {
       isAutoScrolling.current = false;
