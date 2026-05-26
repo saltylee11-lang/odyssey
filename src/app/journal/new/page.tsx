@@ -33,7 +33,6 @@ export default function NewJournal() {
   const [guideMessages, setGuideMessages] = useState<{ role: string; content: string }[]>([]);
   const [guideInput, setGuideInput] = useState("");
   const [guideLoading, setGuideLoading] = useState(false);
-  const [guideStarted, setGuideStarted] = useState(false);
 
   useEffect(() => {
     setApiKey(localStorage.getItem("odyssey_api_key") ?? "");
@@ -131,9 +130,8 @@ export default function NewJournal() {
 
   async function startGuidedSession() {
     const key = localStorage.getItem("odyssey_api_key") || apiKey;
-    if (!key) { setError("请先设置连接密钥"); return; }
+    if (!key) { setError("请先在设置里填写 DeepSeek 密钥"); return; }
     setGuideLoading(true);
-    setGuideStarted(true);
     try {
       const contextPrompt = lastSavedContent
         ? `我刚才记录了这样一段想法：「${lastSavedContent}」。请以我内心深处另一个自己的身份，基于我刚才的这段记录，向我提出一个开放性的追问，引导我继续深挖。不要泛泛而谈，要具体针对我刚才说的内容。语气温柔、好奇、不带评判。`
@@ -153,7 +151,6 @@ export default function NewJournal() {
       setGuideMessages(msgs);
     } catch (e) {
       setError(e instanceof Error ? e.message : "连接失败");
-      setGuideStarted(false);
     } finally {
       setGuideLoading(false);
     }
@@ -267,9 +264,13 @@ export default function NewJournal() {
       {/* Guided AI mode */}
       {mode === "guided" && (
         <div className="flex-1 flex flex-col">
-          {!guideStarted ? (
+          {guideMessages.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-slate-400 text-sm">连接中...</p>
+              {guideLoading ? (
+                <p className="text-slate-400 text-sm">连接中...</p>
+              ) : (
+                <p className="text-slate-300 text-sm">打开方式不对，请返回重试</p>
+              )}
             </div>
           ) : (
             <>

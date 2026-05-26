@@ -151,6 +151,11 @@ export default function Settings() {
         </div>
 
         <div className="p-4 border-b border-slate-200/40">
+          <p className="text-xs text-slate-400 mb-2">DeepSeek 密钥</p>
+          <ApiKeyInput />
+        </div>
+
+        <div className="p-4 border-b border-slate-200/40">
           <p className="text-xs text-slate-400 mb-1">记录总数</p>
           <p className="text-sm text-slate-600">{entryCount} 条</p>
         </div>
@@ -176,5 +181,31 @@ export default function Settings() {
       </Button>
 
     </main>
+  );
+}
+
+function ApiKeyInput() {
+  const [key, setKey] = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("odyssey_api_key") || "";
+    return "";
+  });
+  const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const hasKey = !!key;
+
+  if (!editing && hasKey) {
+    return (
+      <div className="flex gap-2">
+        <Input type="password" value="••••••••" disabled className="flex-1 text-slate-400" />
+        <Button variant="secondary" onClick={() => setEditing(true)} className="px-3 py-1 text-xs">修改</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-2">
+      <Input type="password" placeholder="sk-..." value={key} onChange={(e) => setKey(e.target.value)} className="flex-1 text-sm" />
+      <Button onClick={() => { localStorage.setItem("odyssey_api_key", key); setSaved(true); setEditing(false); setTimeout(() => setSaved(false), 2000); }} className="px-3 py-1 text-xs">{saved ? "已保存" : "保存"}</Button>
+    </div>
   );
 }

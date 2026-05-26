@@ -7,26 +7,18 @@ import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { createClient } from "@/lib/auth/client";
 import { getProfile } from "@/actions/profile";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { BottomNav } from "@/components/ui/BottomNav";
 
 export default function Dashboard() {
   const router = useRouter();
   const [profile, setProfile] = useState<{ name: string; birthdate: string } | null>(null);
   const [days, setDays] = useState(0);
   const [mounted, setMounted] = useState(false);
-
-  // API Key
   const [apiKey, setApiKey] = useState("");
-  const [apiSaved, setApiSaved] = useState(false);
-  const [apiEditing, setApiEditing] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const apiKey = localStorage.getItem("odyssey_api_key") || "";
-    setApiKey(apiKey);
-
+    setApiKey(localStorage.getItem("odyssey_api_key") || "");
     async function load() {
       try {
         const profile = await getProfile();
@@ -70,23 +62,6 @@ export default function Dashboard() {
           深入对话
         </Link>
       )}
-      {!apiKey && <div className="mb-8 h-1" />}
-
-      <GlassCard className="mb-8 p-4">
-        <p className="text-sm text-slate-500 mb-2">连接密钥</p>
-        {!apiEditing && apiKey ? (
-          <div className="flex gap-2">
-            <Input glass type="password" value={apiKey} disabled className="flex-1 text-slate-400" />
-            <Button variant="secondary" onClick={() => setApiEditing(true)} className="px-4 py-2">编辑</Button>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <Input glass type="password" placeholder="sk-..." value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="flex-1" />
-            <Button onClick={() => { localStorage.setItem("odyssey_api_key", apiKey); setApiSaved(true); setApiEditing(false); setTimeout(() => setApiSaved(false), 2000); }} className="px-4 py-2">{apiSaved ? "已保存" : "保存"}</Button>
-          </div>
-        )}
-        <p className="text-xs text-slate-400 mt-2">密钥仅保存在本地浏览器中，不会上传到任何服务器</p>
-      </GlassCard>
     </main>
   );
 }
