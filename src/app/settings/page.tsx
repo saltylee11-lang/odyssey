@@ -179,7 +179,7 @@ export default function Settings() {
 
         <div className="p-4">
           <p className="text-xs text-slate-400 mb-1">奥德赛</p>
-          <p className="text-xs text-slate-400">寻找归途 · v2.0</p>
+          <p className="text-xs text-slate-400">寻找归途 · 0.2.0.0</p>
         </div>
       </GlassCard>
 
