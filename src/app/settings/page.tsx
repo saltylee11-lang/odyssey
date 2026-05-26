@@ -9,7 +9,6 @@ import { getEntries } from "@/actions/journal";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { BottomNav } from "@/components/ui/BottomNav";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 
@@ -105,7 +104,7 @@ export default function Settings() {
 
   if (loading || !profile) {
     return (
-      <main className="flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
+      <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
         <Skeleton className="h-6 w-32 mb-6" />
         <Skeleton className="h-20 w-20 rounded-full mx-auto mb-4" />
         <Skeleton className="h-40 rounded-2xl" />
@@ -116,7 +115,7 @@ export default function Settings() {
   const days = Math.floor((Date.now() - new Date(profile.birthdate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
   return (
-    <main className="flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
+    <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
       <div className="flex items-center justify-between mb-6">
         <Link href="/dashboard" className="text-slate-400 hover:text-slate-600 text-sm">← 返回</Link>
         <h1 className="font-medium text-slate-700">{profile.name}</h1>
@@ -179,7 +178,7 @@ export default function Settings() {
 
         <div className="p-4">
           <p className="text-xs text-slate-400 mb-1">奥德赛</p>
-          <p className="text-xs text-slate-400">寻找归途 · 0.2.0.0</p>
+          <p className="text-xs text-slate-400">寻找归途 · 0.2.0.1</p>
         </div>
       </GlassCard>
 
@@ -187,7 +186,6 @@ export default function Settings() {
         退出登录
       </Button>
 
-      <BottomNav />
     </main>
   );
 }

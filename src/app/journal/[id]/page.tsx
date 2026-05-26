@@ -147,7 +147,7 @@ export default function JournalDetail() {
 
   if (!mounted || loading) {
     return (
-      <main className="flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
+      <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
         <PageHeaderSkeleton />
         <Skeleton className="h-6 w-48 mb-6" />
         <Skeleton className="h-40 mb-4 rounded-2xl" />
@@ -159,7 +159,7 @@ export default function JournalDetail() {
   if (!entry) return null;
 
   return (
-    <main className="flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
+    <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
       <div className="flex items-center justify-between mb-6">
         <Link href="/timeline" className="text-slate-400 hover:text-slate-600 text-sm">← 返回时间线</Link>
         <div className="w-8" />

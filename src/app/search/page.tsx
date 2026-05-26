@@ -7,7 +7,6 @@ import { zhCN } from "date-fns/locale";
 import { searchEntries } from "@/actions/journal";
 import { Input } from "@/components/ui/Input";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { BottomNav } from "@/components/ui/BottomNav";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -38,7 +37,7 @@ export default function SearchPage() {
   }, [query, doSearch]);
 
   return (
-    <main className="flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
+    <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
       <PageHeader title="搜索" backHref="/dashboard" />
 
       <Input
@@ -80,7 +79,6 @@ export default function SearchPage() {
         </div>
       ) : null}
 
-      <BottomNav />
     </main>
   );
 }

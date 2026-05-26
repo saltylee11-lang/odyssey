@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
+import { BottomNav } from "@/components/ui/BottomNav";
 
 export const metadata: Metadata = {
   title: "奥德赛 - 寻找归途",
@@ -71,6 +72,7 @@ export default function RootLayout({
           }}
         />
         <ToastProvider>{children}</ToastProvider>
+        <BottomNav />
       </body>
     </html>
   );

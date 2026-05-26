@@ -10,7 +10,6 @@ import { getProfile } from "@/actions/profile";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { BottomNav } from "@/components/ui/BottomNav";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -50,8 +49,7 @@ export default function Dashboard() {
   const today = format(new Date(), "yyyy年M月d日 EEEE", { locale: zhCN });
 
   return (
-    <main className="flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
-      {/* Header */}
+    <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
       <div className="text-center py-8">
         <p className="text-slate-500 text-sm">{today}</p>
         <h1 className="text-lg text-slate-500 mt-1">
@@ -63,7 +61,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick action */}
       <Link href="/journal/new" className="block w-full py-4 text-center bg-indigo-500/85 backdrop-blur-sm text-white font-medium rounded-xl hover:bg-indigo-600/85 transition-colors cursor-pointer mb-3">
         此刻你在想什么？
       </Link>
@@ -75,7 +72,6 @@ export default function Dashboard() {
       )}
       {!apiKey && <div className="mb-8 h-1" />}
 
-      {/* API Key */}
       <GlassCard className="mb-8 p-4">
         <p className="text-sm text-slate-500 mb-2">连接密钥</p>
         {!apiEditing && apiKey ? (
@@ -85,27 +81,12 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="flex gap-2">
-            <Input
-              glass type="password" placeholder="sk-..."
-              value={apiKey} onChange={(e) => setApiKey(e.target.value)}
-              className="flex-1"
-            />
-            <Button
-              onClick={() => {
-                localStorage.setItem("odyssey_api_key", apiKey);
-                setApiSaved(true); setApiEditing(false);
-                setTimeout(() => setApiSaved(false), 2000);
-              }}
-              className="px-4 py-2"
-            >
-              {apiSaved ? "已保存" : "保存"}
-            </Button>
+            <Input glass type="password" placeholder="sk-..." value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="flex-1" />
+            <Button onClick={() => { localStorage.setItem("odyssey_api_key", apiKey); setApiSaved(true); setApiEditing(false); setTimeout(() => setApiSaved(false), 2000); }} className="px-4 py-2">{apiSaved ? "已保存" : "保存"}</Button>
           </div>
         )}
         <p className="text-xs text-slate-400 mt-2">密钥仅保存在本地浏览器中，不会上传到任何服务器</p>
       </GlassCard>
-
-      <BottomNav />
     </main>
   );
 }

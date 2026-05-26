@@ -214,7 +214,7 @@ export default function NewJournal() {
 
   if (saved) {
     return (
-      <main className="flex-1 flex flex-col items-center justify-center p-6">
+      <main className="flex-1 flex flex-col items-center justify-center p-6 pb-24">
         <GlassCard className="text-center p-8">
           <p className="text-4xl mb-4">✓</p>
           <h2 className="text-xl font-semibold mb-2 text-slate-800">已保存</h2>
@@ -247,7 +247,7 @@ export default function NewJournal() {
   }
 
   return (
-    <main className="flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
+    <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
       <PageHeader title={mode === "guided" ? "深入对话" : "此刻"} backHref="/dashboard" />
       {dayOverride && (
         <p className="text-xs text-slate-400 text-center -mt-2 mb-3">

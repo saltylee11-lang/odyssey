@@ -8,7 +8,6 @@ import { zhCN } from "date-fns/locale";
 import { createClient } from "@/lib/auth/client";
 import { getProfile } from "@/actions/profile";
 import { getEntries } from "@/actions/journal";
-import { BottomNav } from "@/components/ui/BottomNav";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 const TICK_WIDTH = 10;
@@ -146,7 +145,7 @@ export default function Timeline() {
   }
 
   return (
-    <main className="flex-1 flex flex-col max-w-lg mx-auto w-full h-dvh overflow-hidden" style={{ overscrollBehavior: "none" }}>
+    <main className="flex-1 flex flex-col max-w-lg mx-auto w-full min-h-screen pb-24">
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-6 pb-2 flex-shrink-0">
         <Link href="/dashboard" className="text-slate-400 hover:text-slate-600 text-sm">← 返回</Link>
@@ -328,7 +327,6 @@ export default function Timeline() {
       </div>
 
       <div className="px-6 pb-6 pt-2 flex-shrink-0">
-        <BottomNav />
       </div>
     </main>
   );
