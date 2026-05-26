@@ -134,104 +134,13 @@ export default function Home() {
 
   return (
     <main className="flex-1 relative overflow-hidden">
-      {/* Night sky background */}
+      {/* Cover image background */}
       <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(180deg, #0a1628 0%, #102340 20%, #162d50 45%, #1b3660 70%, #1f3f6e 100%)",
-        }}
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url(/cover.jpg)" }}
       />
-
-      {/* Sea */}
-      <div
-        className="absolute left-0 right-0 bottom-0"
-        style={{
-          height: "35%",
-          background:
-            "linear-gradient(180deg, #162d50 0%, #0f2140 30%, #091830 65%, #051020 100%)",
-        }}
-      />
-
-      {/* Horizon line */}
-      <div
-        className="absolute left-0 right-0"
-        style={{
-          bottom: "35%",
-          height: "1px",
-          background:
-            "linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.08) 50%, transparent 75%)",
-        }}
-      />
-
-      {/* Moon */}
-      <div className="absolute" style={{ top: "12%", left: "18%" }}>
-        <div
-          style={{
-            width: 120, height: 120, borderRadius: "50%",
-            background:
-              "radial-gradient(circle, rgba(254,243,199,0.12) 0%, rgba(254,243,199,0.03) 50%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute"
-          style={{
-            width: 75, height: 75, top: 22, left: 22, borderRadius: "50%",
-            background:
-              "radial-gradient(circle, rgba(254,243,199,0.25) 0%, rgba(253,230,138,0.06) 55%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute"
-          style={{
-            width: 48, height: 48, top: 36, left: 36, borderRadius: "50%",
-            background:
-              "radial-gradient(circle at 40% 35%, #fefdf7 0%, #fbf5e4 25%, #f2e1b0 60%, #e4cd86 100%)",
-            boxShadow:
-              "0 0 30px rgba(254,243,199,0.18), 0 0 60px rgba(254,243,199,0.05)",
-          }}
-        />
-      </div>
-
-      {/* Moon reflection */}
-      <div
-        className="absolute"
-        style={{
-          bottom: "15%", left: "30%", width: 80, height: 140,
-          background:
-            "linear-gradient(180deg, rgba(254,243,199,0.1) 0%, rgba(254,243,199,0.04) 40%, transparent 80%)",
-          borderRadius: "50%", filter: "blur(3px)",
-        }}
-      />
-      <div className="absolute" style={{ bottom: "17%", left: "38%", width: 50, height: 2, borderRadius: 1 }}>
-        <div className="w-full h-full rounded-full bg-amber-200/08" />
-      </div>
-      <div className="absolute" style={{ bottom: "22%", left: "36%", width: 30, height: 1.5, borderRadius: 1 }}>
-        <div className="w-full h-full rounded-full bg-amber-200/05" />
-      </div>
-
-      {/* Small boat silhouette */}
-      <div className="absolute" style={{ bottom: "28%", right: "16%", width: 36, height: 16 }}>
-        <div
-          style={{
-            position: "absolute", bottom: 0, left: 3, width: 30, height: 8,
-            background: "#0d1d36", borderRadius: "0 0 50% 50%",
-            borderBottom: "1.5px solid #132a4a",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute", bottom: 5, left: 10, width: 14, height: 5,
-            background: "#081528", borderRadius: "40%",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute", bottom: 4, left: 24, width: 0.8, height: 12,
-            background: "#132a4a",
-          }}
-        />
-      </div>
+      {/* Dark overlay for text readability */}
+      <div className="absolute inset-0 bg-black/30" />
 
       {/* Auth card */}
       <div className="absolute inset-0 flex items-center justify-center p-6">
