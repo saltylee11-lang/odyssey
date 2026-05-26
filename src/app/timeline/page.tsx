@@ -91,35 +91,35 @@ export default function Timeline() {
     load();
   }, [router]);
 
-  // Auto-scroll to today + init selected day/entries
-  // Auto-scroll to today using scrollIntoView (avoids pixel calc issues)
+  // Auto-scroll to today on mount
+  const hasAutoScrolled = useRef(false);
   useEffect(() => {
-    if (!loading || totalDays <= 0) return;
+    if (!loading || totalDays <= 0 || hasAutoScrolled.current) return;
+    hasAutoScrolled.current = true;
 
     isAutoScrolling.current = true;
     selectedDayRef.current = totalDays;
     setSelectedDay(totalDays);
     setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
 
-    // Wait for the tick elements to render, then scroll today into view
-    const tryScroll = (attempts: number) => {
-      if (attempts <= 0) {
-        isAutoScrolling.current = false;
-        return;
-      }
-      const el = document.querySelector(`[data-day="${totalDays}"]`);
-      if (el) {
-        el.scrollIntoView({ inline: "center", behavior: "instant" });
+    // Expand visible range to include today (it should already, but ensure it)
+    setVisStart(Math.max(1, totalDays - BUFFER_DAYS));
+    setVisEnd(totalDays + BUFFER_DAYS);
+
+    // After React renders the today tick, scroll to it
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-day="${totalDays}"]`);
+        if (el) {
+          el.scrollIntoView({ inline: "center", behavior: "instant" });
+        }
         setTimeout(() => {
           isAutoScrolling.current = false;
           setSelectedDay(totalDays);
           setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
         }, 400);
-      } else {
-        requestAnimationFrame(() => tryScroll(attempts - 1));
-      }
-    };
-    requestAnimationFrame(() => tryScroll(20));
+      });
+    });
   }, [loading, totalDays]);
 
   const handleScroll = useCallback(() => {
@@ -345,8 +345,10 @@ export default function Timeline() {
                   {entry.summary || entry.content.slice(0, 80) + (entry.content.length > 80 ? "..." : "")}
                 </p>
                 <div className="flex items-center gap-2 mt-2">
-                  <p className="text-xs text-slate-400">
-                    {format(new Date(entry.createdAt), "HH:mm")}
+                  <p className={`text-xs ${entry.dayNumber === todayDayNum.current ? "text-slate-400" : "text-indigo-400"}`}>
+                    {entry.dayNumber === todayDayNum.current
+                      ? format(new Date(entry.createdAt), "HH:mm")
+                      : format(new Date(entry.createdAt), "M月d日 HH:mm")}
                   </p>
                   {entry.tags?.length > 0 && (
                     <div className="flex gap-1">
