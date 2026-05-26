@@ -165,13 +165,13 @@ export default function Timeline() {
     selectedDayRef.current = target;
     setSelectedDay(target);
     setSelectedEntries(entriesByDay.current.get(target) ?? []);
-    scrollRef.current.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
+    scrollRef.current.scrollTo({ left: Math.max(0, targetLeft), behavior: "instant" });
     // Force correct after scroll animation ends
     setTimeout(() => {
       isAutoScrolling.current = false;
       setSelectedDay(target);
       setSelectedEntries(entriesByDay.current.get(target) ?? []);
-    }, 1000);
+    }, 200);
   }
 
   return (
