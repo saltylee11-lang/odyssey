@@ -129,26 +129,17 @@ export default function NewJournal() {
   }
 
   async function startGuidedSession() {
-    const key = localStorage.getItem("odyssey_api_key") || apiKey;
-    if (!key) { setError("请先在设置里填写 DeepSeek 密钥"); return; }
+    if (!apiKey) { setError("请先在设置里填写 DeepSeek 密钥"); return; }
     setGuideLoading(true);
     try {
       const ctx = lastSavedContent ? lastSavedContent.slice(0, 600) : "";
-      const contextPrompt = ctx
+      const prompt = ctx
         ? `我刚才记录了这样一段想法：「${ctx}」。请以我内心深处另一个自己的身份，基于我刚才的这段记录，向我提出一个开放性的追问，引导我继续深挖。不要泛泛而谈，要具体针对我刚才说的内容。语气温柔、好奇、不带评判。`
         : "请以我内心深处另一个自己的身份，向我提出一个开放性的问题。要温柔、好奇、不带评判，引导我探索此刻的内心。";
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: contextPrompt, apiKey: key }),
-      });
-      if (!res.ok) throw new Error("连接失败");
-      const data = await res.json();
+      const { reply } = await chatWithAI(prompt, apiKey);
       const msgs: { role: string; content: string }[] = [];
-      if (ctx) {
-        msgs.push({ role: "user", content: ctx });
-      }
-      msgs.push({ role: "assistant", content: data.reply });
+      if (ctx) msgs.push({ role: "user", content: ctx });
+      msgs.push({ role: "assistant", content: reply });
       setGuideMessages(msgs);
     } catch (e) {
       setError(e instanceof Error ? e.message : "连接失败");
@@ -158,8 +149,7 @@ export default function NewJournal() {
   }
 
   async function sendGuideMessage() {
-    const key = localStorage.getItem("odyssey_api_key") || apiKey;
-    if (!guideInput.trim() || !key) return;
+    if (!guideInput.trim() || !apiKey) return;
     const userMsg = guideInput.trim();
     setGuideInput("");
     const updated = [...guideMessages, { role: "user", content: userMsg }];
@@ -167,17 +157,10 @@ export default function NewJournal() {
     setGuideLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: `${lastSavedContent ? `最初的记录：「${lastSavedContent}」\n\n` : ""}之前的对话：\n${updated.map((m) => (m.role === "assistant" ? "内心：" : "我：") + m.content).join("\n")}\n\n请继续以我内心另一个自己的身份回应我。可以先简短回应，然后继续提问引导我深入思考。紧扣最初记录的主题。`,
-          apiKey: key,
-        }),
-      });
-      if (!res.ok) throw new Error("连接失败");
-      const data = await res.json();
-      setGuideMessages([...updated, { role: "assistant", content: data.reply }]);
+      const ctx = lastSavedContent ? `最初的记录：「${lastSavedContent.slice(0, 600)}」\n\n` : "";
+      const prompt = `${ctx}之前的对话：\n${updated.map((m) => (m.role === "assistant" ? "内心：" : "我：") + m.content).join("\n")}\n\n请继续以我内心另一个自己的身份回应我。可以先简短回应，然后继续提问引导我深入思考。紧扣最初记录的主题。`;
+      const { reply } = await chatWithAI(prompt, apiKey);
+      setGuideMessages([...updated, { role: "assistant", content: reply }]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "连接失败");
     } finally {
