@@ -38,7 +38,14 @@ export default function NewJournal() {
   useEffect(() => {
     setApiKey(localStorage.getItem("odyssey_api_key") ?? "");
     const params = new URLSearchParams(window.location.search);
-    if (params.get("mode") === "guided") setMode("guided");
+    if (params.get("mode") === "guided") {
+      setMode("guided");
+      // Auto-start from URL param after profile loads & apiKey is set
+      setTimeout(() => {
+        const key = localStorage.getItem("odyssey_api_key");
+        if (key) startGuidedSession();
+      }, 200);
+    }
     const targetDay = parseInt(params.get("day") || "");
     if (!isNaN(targetDay) && targetDay >= 1) setDayOverride(targetDay);
     getProfile().then((p) => {
@@ -151,13 +158,6 @@ export default function NewJournal() {
     }
   }
 
-  // Auto-start guided session when mode changes to guided
-  useEffect(() => {
-    if (mode === "guided" && !guideStarted && apiKey) {
-      startGuidedSession();
-    }
-  }, [mode, apiKey, guideStarted]);
-
   async function sendGuideMessage() {
     if (!guideInput.trim() || !apiKey) return;
     const userMsg = guideInput.trim();
@@ -231,7 +231,7 @@ export default function NewJournal() {
               <Button onClick={() => {
                 setLastSavedContent(content);
                 setSaved(false); setChatting(false); setError("");
-                setMode("guided"); setContent("");
+                setMode("guided"); setContent(""); startGuidedSession();
               }} className="py-3 px-8 bg-indigo-500">
                 深入对话
               </Button>
