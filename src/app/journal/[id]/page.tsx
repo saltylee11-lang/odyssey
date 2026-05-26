@@ -160,10 +160,6 @@ export default function JournalDetail() {
 
   return (
     <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
-      <div className="flex items-center justify-between mb-6">
-        <Link href="/timeline" className="text-slate-400 hover:text-slate-600 text-sm">← 返回时间线</Link>
-        <div className="w-8" />
-      </div>
 
       <p className="text-sm text-slate-400 mb-6">
         {format(new Date(entry.createdAt as string | Date), "yyyy年M月d日 HH:mm", { locale: zhCN })}

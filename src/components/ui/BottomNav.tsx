@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils/cn";
 
 const navItems = [
   { href: "/dashboard", label: "首页" },
@@ -23,39 +22,29 @@ export function BottomNav() {
       <div
         className="mx-auto max-w-lg"
         style={{
-          background: "rgba(255,255,255,0.55)",
+          background: "rgba(248,248,252,0.72)",
           backdropFilter: "blur(24px) saturate(180%)",
           WebkitBackdropFilter: "blur(24px) saturate(180%)",
-          borderTop: "0.5px solid rgba(0,0,0,0.06)",
+          borderTop: "0.5px solid rgba(0,0,0,0.08)",
         }}
       >
-        <div className="flex justify-around px-2 py-2.5 text-sm">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors",
-                pathname === item.href
-                  ? "text-indigo-500"
-                  : "text-slate-300 hover:text-slate-500"
-              )}
-            >
-              <span className="text-lg leading-none">
-                {item.label === "首页" && "☀️"}
-                {item.label === "此刻" && "✍️"}
-                {item.label === "时间轴" && "🕰️"}
-                {item.label === "搜索" && "🔍"}
-                {item.label === "设置" && "⚙️"}
-              </span>
-              <span className={cn(
-                "text-[11px]",
-                pathname === item.href ? "font-medium" : ""
-              )}>
+        <div className="flex justify-around px-6 py-3">
+          {navItems.map((item) => {
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-xs tracking-wide transition-colors"
+                style={{
+                  color: active ? "#6366f1" : "#b0b0b0",
+                  fontWeight: active ? 500 : 400,
+                }}
+              >
                 {item.label}
-              </span>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -116,10 +116,8 @@ export default function Settings() {
 
   return (
     <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
-      <div className="flex items-center justify-between mb-6">
-        <Link href="/dashboard" className="text-slate-400 hover:text-slate-600 text-sm">← 返回</Link>
-        <h1 className="font-medium text-slate-700">{profile.name}</h1>
-        <div className="w-8" />
+      <div className="flex items-center justify-center mb-6">
+        <h1 className="font-medium text-slate-500 text-sm">设置</h1>
       </div>
 
       {/* Avatar */}

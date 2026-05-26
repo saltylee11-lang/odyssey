@@ -147,10 +147,8 @@ export default function Timeline() {
   return (
     <main className="flex-1 flex flex-col max-w-lg mx-auto w-full min-h-screen pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-6 pb-2 flex-shrink-0">
-        <Link href="/dashboard" className="text-slate-400 hover:text-slate-600 text-sm">← 返回</Link>
-        <h1 className="font-medium text-slate-700">时间轴</h1>
-        <div className="w-8" />
+      <div className="flex items-center justify-center px-6 pt-6 pb-2 flex-shrink-0">
+        <h1 className="font-medium text-slate-500 text-sm">时间轴</h1>
       </div>
 
       {/* Day counter */}

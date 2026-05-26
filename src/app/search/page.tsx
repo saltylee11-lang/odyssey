@@ -38,7 +38,7 @@ export default function SearchPage() {
 
   return (
     <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
-      <PageHeader title="搜索" backHref="/dashboard" />
+      <PageHeader title="搜索" />
 
       <Input
         glass
