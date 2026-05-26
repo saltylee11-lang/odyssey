@@ -95,15 +95,20 @@ export default function Timeline() {
   // Auto-scroll to today + init selected day/entries
   useEffect(() => {
     if (!loading && totalDays > 0 && scrollRef.current) {
-      const viewWidth = scrollRef.current.clientWidth;
-      const targetLeft = (totalDays + VISIBLE_DAYS) * TICK_WIDTH - viewWidth / 2;
-      isAutoScrolling.current = true;
-      scrollRef.current.scrollTo({ left: Math.max(0, targetLeft), behavior: "instant" });
-      selectedDayRef.current = totalDays;
-      setSelectedDay(totalDays);
-      setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
-      // Release auto-scroll guard after scroll settles
-      setTimeout(() => { isAutoScrolling.current = false; }, 500);
+      // Wait for layout to complete before scroll (production needs this)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!scrollRef.current) return;
+          const viewWidth = scrollRef.current.clientWidth;
+          const targetLeft = (totalDays + VISIBLE_DAYS) * TICK_WIDTH - viewWidth / 2;
+          isAutoScrolling.current = true;
+          scrollRef.current.scrollTo({ left: Math.max(0, targetLeft), behavior: "instant" });
+          selectedDayRef.current = totalDays;
+          setSelectedDay(totalDays);
+          setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
+          setTimeout(() => { isAutoScrolling.current = false; }, 800);
+        });
+      });
     }
   }, [loading, totalDays]);
 
