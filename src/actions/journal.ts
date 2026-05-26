@@ -11,9 +11,9 @@ async function getUserId() {
   return user.id;
 }
 
-export async function createEntry(content: string, tags: string[], birthdate: string) {
+export async function createEntry(content: string, tags: string[], birthdate: string, dayNumberOverride?: number) {
   const userId = await getUserId();
-  const dayNumber = await daysAlive(birthdate);
+  const dayNumber = dayNumberOverride ?? await daysAlive(birthdate);
   const supabase = await getSupabaseServer();
   const { data, error } = await supabase
     .from("journal_entries")
@@ -39,10 +39,11 @@ export async function createEntryWithAI(
   birthdate: string,
   aiReply: string,
   summary: string,
-  userReply?: string
+  userReply?: string,
+  dayNumberOverride?: number
 ) {
   const userId = await getUserId();
-  const dayNumber = await daysAlive(birthdate);
+  const dayNumber = dayNumberOverride ?? await daysAlive(birthdate);
   const supabase = await getSupabaseServer();
   const { data: entry, error } = await supabase
     .from("journal_entries")

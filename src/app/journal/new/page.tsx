@@ -31,6 +31,7 @@ export default function NewJournal() {
   const [chatting, setChatting] = useState(false);
   const [birthdate, setBirthdate] = useState("");
   const [apiKey, setApiKey] = useState("");
+  const [dayOverride, setDayOverride] = useState<number | undefined>();
   const [mode, setMode] = useState<"normal" | "guided">("normal");
 
   // Guided mode state
@@ -43,6 +44,8 @@ export default function NewJournal() {
     setApiKey(localStorage.getItem("odyssey_api_key") ?? "");
     const params = new URLSearchParams(window.location.search);
     if (params.get("mode") === "guided") setMode("guided");
+    const targetDay = parseInt(params.get("day") || "");
+    if (!isNaN(targetDay) && targetDay >= 1) setDayOverride(targetDay);
     getProfile().then((p) => {
       if (!p) router.push("/");
       else setBirthdate(p.birthdate);
@@ -52,7 +55,7 @@ export default function NewJournal() {
   async function handleSave() {
     if (!content.trim()) return;
     try {
-      await createEntry(content, tags, birthdate);
+      await createEntry(content, tags, birthdate, dayOverride);
       toast("已保存", "success");
       setSaved(true);
     } catch (e) {
@@ -79,7 +82,7 @@ export default function NewJournal() {
 
   async function handleReplyAndSave() {
     try {
-      await createEntryWithAI(content, tags, birthdate, aiReply, aiSummary, userReply || undefined);
+      await createEntryWithAI(content, tags, birthdate, aiReply, aiSummary, userReply || undefined, dayOverride);
       toast("已保存", "success");
       setSaved(true);
     } catch (e) {
@@ -89,7 +92,7 @@ export default function NewJournal() {
 
   async function handleSkipAndSave() {
     try {
-      await createEntryWithAI(content, tags, birthdate, aiReply, aiSummary);
+      await createEntryWithAI(content, tags, birthdate, aiReply, aiSummary, undefined, dayOverride);
       toast("已保存", "success");
       setSaved(true);
     } catch (e) {
@@ -164,7 +167,9 @@ export default function NewJournal() {
         tags,
         birthdate,
         guideMessages.filter((m) => m.role === "assistant").map((m) => m.content).join("\n---\n"),
-        summary
+        summary,
+        undefined,
+        dayOverride
       );
       toast("已保存", "success");
       setSaved(true);
@@ -209,6 +214,11 @@ export default function NewJournal() {
   return (
     <main className="flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
       <PageHeader title={mode === "guided" ? "深入对话" : "此刻"} backHref="/dashboard" />
+      {dayOverride && (
+        <p className="text-xs text-slate-400 text-center -mt-2 mb-3">
+          记录在第 {dayOverride} 天
+        </p>
+      )}
 
       {/* Guided AI mode */}
       {mode === "guided" && (

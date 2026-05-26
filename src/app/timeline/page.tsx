@@ -326,7 +326,7 @@ export default function Timeline() {
             </p>
             {selectedDay != null && selectedDay <= totalDays && (
               <Link
-                href="/journal/new"
+                href={`/journal/new?day=${selectedDay}`}
                 className="text-sm text-indigo-400 hover:text-indigo-600 transition-colors"
               >
                 添加记录
