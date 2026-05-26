@@ -38,7 +38,6 @@ export default function Timeline() {
   const [selectedEntries, setSelectedEntries] = useState<EntryData[]>([]);
   const todayDayNum = useRef(0);
   const selectedDayRef = useRef(0);
-  const isAutoScrolling = useRef(false);
 
   // Visible range for virtualization
   const [visStart, setVisStart] = useState(0);
@@ -86,41 +85,30 @@ export default function Timeline() {
         if (!data.user) router.push("/");
       } finally {
         setLoading(false);
+        // Auto-scroll to today after data loads
+        setTimeout(() => jumpToTodayInner(dayNum), 100);
       }
     }
     load();
   }, [router]);
 
-  // Auto-scroll to today on mount
-  const hasAutoScrolled = useRef(false);
-  useEffect(() => {
-    if (!loading || totalDays <= 0 || hasAutoScrolled.current) return;
-    hasAutoScrolled.current = true;
+  function jumpToTodayInner(target: number) {
+    if (!scrollRef.current || target <= 0) return;
+    selectedDayRef.current = target;
+    setSelectedDay(target);
+    setSelectedEntries(entriesByDay.current.get(target) ?? []);
+    setVisStart(Math.max(1, target - BUFFER_DAYS));
+    setVisEnd(target + BUFFER_DAYS);
 
-    isAutoScrolling.current = true;
-    selectedDayRef.current = totalDays;
-    setSelectedDay(totalDays);
-    setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
-
-    // Expand visible range to include today (it should already, but ensure it)
-    setVisStart(Math.max(1, totalDays - BUFFER_DAYS));
-    setVisEnd(totalDays + BUFFER_DAYS);
-
-    // After React renders the today tick, scroll to it
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const el = document.querySelector(`[data-day="${totalDays}"]`);
+        const el = document.querySelector(`[data-day="${target}"]`);
         if (el) {
           el.scrollIntoView({ inline: "center", behavior: "instant" });
         }
-        setTimeout(() => {
-          isAutoScrolling.current = false;
-          setSelectedDay(totalDays);
-          setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
-        }, 400);
       });
     });
-  }, [loading, totalDays]);
+  }
 
   const handleScroll = useCallback(() => {
     if (!scrollRef.current) return;
@@ -151,28 +139,7 @@ export default function Timeline() {
 
   function jumpToDay(target: number) {
     if (isNaN(target) || target < 1) return;
-    isAutoScrolling.current = true;
-    selectedDayRef.current = target;
-    setSelectedDay(target);
-    setSelectedEntries(entriesByDay.current.get(target) ?? []);
-
-    // Expand visible range to include target day so it gets rendered
-    setVisStart(Math.max(1, target - BUFFER_DAYS));
-    setVisEnd(target + BUFFER_DAYS);
-
-    // Wait a frame for React to render the target tick, then scroll to it
-    requestAnimationFrame(() => {
-      const el = document.querySelector(`[data-day="${target}"]`);
-      if (el) {
-        el.scrollIntoView({ inline: "center", behavior: "instant" });
-      }
-      setTimeout(() => {
-        isAutoScrolling.current = false;
-        selectedDayRef.current = target;
-        setSelectedDay(target);
-        setSelectedEntries(entriesByDay.current.get(target) ?? []);
-      }, 300);
-    });
+    jumpToTodayInner(target);
   }
 
   return (
