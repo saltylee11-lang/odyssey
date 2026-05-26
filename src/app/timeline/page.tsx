@@ -93,28 +93,38 @@ export default function Timeline() {
   }, [router]);
 
   // Auto-scroll to today + init selected day/entries
+  // Auto-scroll to today and lock it
   useEffect(() => {
-    if (!loading && totalDays > 0 && scrollRef.current) {
-      // Wait for layout to complete before scroll (production needs this)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (!scrollRef.current) return;
-          const viewWidth = scrollRef.current.clientWidth;
-          const targetLeft = (totalDays + VISIBLE_DAYS) * TICK_WIDTH - viewWidth / 2;
-          isAutoScrolling.current = true;
-          scrollRef.current.scrollTo({ left: Math.max(0, targetLeft), behavior: "instant" });
-          selectedDayRef.current = totalDays;
-          setSelectedDay(totalDays);
-          setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
-          setTimeout(() => { isAutoScrolling.current = false; }, 800);
-        });
-      });
-    }
+    if (!loading || totalDays <= 0 || !scrollRef.current) return;
+
+    const viewWidth = scrollRef.current.clientWidth;
+    const targetLeft = (totalDays + VISIBLE_DAYS) * TICK_WIDTH - viewWidth / 2;
+
+    isAutoScrolling.current = true;
+    selectedDayRef.current = totalDays;
+    setSelectedDay(totalDays);
+    setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
+
+    // Use scrollTo if possible, but accept it might be imprecise
+    scrollRef.current.scrollTo({ left: Math.max(0, targetLeft), behavior: "instant" });
+
+    // After scroll settles, force-correct to today regardless of scroll position
+    const settleTimer = setTimeout(() => {
+      isAutoScrolling.current = false;
+      // Force today — don't rely on scroll event detection
+      const dayEntries = entriesByDay.current.get(totalDays);
+      if (dayEntries && dayEntries.length > 0) {
+        setSelectedDay(totalDays);
+        setSelectedEntries(dayEntries);
+      }
+    }, 1000);
+
+    return () => clearTimeout(settleTimer);
   }, [loading, totalDays]);
 
-  // Throttled scroll handler
+  // Throttled scroll handler — only active when user manually scrolls
   const handleScroll = useCallback(() => {
-    if (rafRef.current) return;
+    if (rafRef.current || isAutoScrolling.current) return;
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = 0;
       if (!scrollRef.current || isAutoScrolling.current) return;
@@ -152,11 +162,16 @@ export default function Timeline() {
     const viewWidth = scrollRef.current.clientWidth;
     const targetLeft = (target + VISIBLE_DAYS) * TICK_WIDTH - viewWidth / 2;
     isAutoScrolling.current = true;
-    scrollRef.current.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
     selectedDayRef.current = target;
     setSelectedDay(target);
     setSelectedEntries(entriesByDay.current.get(target) ?? []);
-    setTimeout(() => { isAutoScrolling.current = false; }, 800);
+    scrollRef.current.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
+    // Force correct after scroll animation ends
+    setTimeout(() => {
+      isAutoScrolling.current = false;
+      setSelectedDay(target);
+      setSelectedEntries(entriesByDay.current.get(target) ?? []);
+    }, 1000);
   }
 
   return (
