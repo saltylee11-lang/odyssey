@@ -29,6 +29,7 @@ export default function NewJournal() {
   const [apiKey, setApiKey] = useState("");
   const [dayOverride, setDayOverride] = useState<number | undefined>();
   const [mode, setMode] = useState<"normal" | "guided">("normal");
+  const [lastSavedContent, setLastSavedContent] = useState("");
 
   // Guided mode state
   const [guideMessages, setGuideMessages] = useState<{ role: string; content: string }[]>([]);
@@ -101,17 +102,22 @@ export default function NewJournal() {
     setGuideLoading(true);
     setGuideStarted(true);
     try {
+      const contextPrompt = lastSavedContent
+        ? `我刚才记录了这样一段想法：「${lastSavedContent.slice(0, 300)}」。请以我内心深处另一个自己的身份，基于我刚才的这段记录，向我提出一个开放性的追问，引导我继续深挖。不要泛泛而谈，要具体针对我刚才说的内容。语气温柔、好奇、不带评判。`
+        : "请以我内心深处另一个自己的身份，向我提出一个开放性的问题。要温柔、好奇、不带评判，引导我探索此刻的内心。";
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: "请以我内心深处另一个自己的身份，向我提出一个开放性的问题。要温柔、好奇、不带评判，引导我探索此刻的内心。结合我之前的记录风格和语气。",
-          apiKey,
-        }),
+        body: JSON.stringify({ content: contextPrompt, apiKey }),
       });
       if (!res.ok) throw new Error("连接失败");
       const data = await res.json();
-      setGuideMessages([{ role: "assistant", content: data.reply }]);
+      const msgs: { role: string; content: string }[] = [];
+      if (lastSavedContent) {
+        msgs.push({ role: "user", content: lastSavedContent.slice(0, 300) });
+      }
+      msgs.push({ role: "assistant", content: data.reply });
+      setGuideMessages(msgs);
     } catch (e) {
       setError(e instanceof Error ? e.message : "连接失败");
       setGuideStarted(false);
@@ -133,7 +139,7 @@ export default function NewJournal() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: `之前的对话：\n${updated.map((m) => (m.role === "assistant" ? "内心：" : "我：") + m.content).join("\n")}\n\n请继续以我内心另一个自己的身份回应我。可以先简短回应，然后继续提问引导我深入思考。`,
+          content: `${lastSavedContent ? `最初的记录：「${lastSavedContent.slice(0, 300)}」\n\n` : ""}之前的对话：\n${updated.map((m) => (m.role === "assistant" ? "内心：" : "我：") + m.content).join("\n")}\n\n请继续以我内心另一个自己的身份回应我。可以先简短回应，然后继续提问引导我深入思考。紧扣最初记录的主题。`,
           apiKey,
         }),
       });
@@ -184,6 +190,7 @@ export default function NewJournal() {
           <div className="flex flex-col gap-3">
             {apiKey && (
               <Button onClick={() => {
+                setLastSavedContent(content);
                 setSaved(false); setChatting(false); setError("");
                 setMode("guided"); setContent("");
               }} className="py-3 px-8 bg-indigo-500">
