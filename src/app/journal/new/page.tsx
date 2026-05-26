@@ -130,7 +130,8 @@ export default function NewJournal() {
   }
 
   async function startGuidedSession() {
-    if (!apiKey) { setError("请先设置连接密钥"); return; }
+    const key = localStorage.getItem("odyssey_api_key") || apiKey;
+    if (!key) { setError("请先设置连接密钥"); return; }
     setGuideLoading(true);
     setGuideStarted(true);
     try {
@@ -140,7 +141,7 @@ export default function NewJournal() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: contextPrompt, apiKey }),
+        body: JSON.stringify({ content: contextPrompt, apiKey: key }),
       });
       if (!res.ok) throw new Error("连接失败");
       const data = await res.json();
@@ -159,7 +160,8 @@ export default function NewJournal() {
   }
 
   async function sendGuideMessage() {
-    if (!guideInput.trim() || !apiKey) return;
+    const key = localStorage.getItem("odyssey_api_key") || apiKey;
+    if (!guideInput.trim() || !key) return;
     const userMsg = guideInput.trim();
     setGuideInput("");
     const updated = [...guideMessages, { role: "user", content: userMsg }];
@@ -172,7 +174,7 @@ export default function NewJournal() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: `${lastSavedContent ? `最初的记录：「${lastSavedContent}」\n\n` : ""}之前的对话：\n${updated.map((m) => (m.role === "assistant" ? "内心：" : "我：") + m.content).join("\n")}\n\n请继续以我内心另一个自己的身份回应我。可以先简短回应，然后继续提问引导我深入思考。紧扣最初记录的主题。`,
-          apiKey,
+          apiKey: key,
         }),
       });
       if (!res.ok) throw new Error("连接失败");
