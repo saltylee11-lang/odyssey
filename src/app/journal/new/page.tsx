@@ -265,11 +265,15 @@ export default function NewJournal() {
       {mode === "guided" && (
         <div className="flex-1 flex flex-col">
           {guideMessages.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center flex-col gap-4">
               {guideLoading ? (
                 <p className="text-slate-400 text-sm">连接中...</p>
               ) : (
-                <p className="text-slate-300 text-sm">打开方式不对，请返回重试</p>
+                <>
+                  <p className="text-slate-300 text-sm">无法连接</p>
+                  {error && <p className="text-red-400 text-xs">{error}</p>}
+                  <button onClick={() => setMode("normal")} className="text-xs text-indigo-400 hover:text-indigo-600 cursor-pointer">返回</button>
+                </>
               )}
             </div>
           ) : (
