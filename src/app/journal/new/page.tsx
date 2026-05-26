@@ -299,7 +299,7 @@ export default function NewJournal() {
           {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
           <div className="flex gap-3 mt-4">
             <Button onClick={handleSave} disabled={!content.trim()} className="flex-1">
-              保存
+              记录
             </Button>
             <Button variant="secondary" onClick={handleChat} disabled={loading || !content.trim()}>
               {loading ? "思考中..." : "深入聊聊"}
@@ -344,7 +344,7 @@ export default function NewJournal() {
 
           <div className="flex gap-3">
             <Button onClick={handleReplyAndSave} disabled={!userReply.trim()} className="flex-1">
-              回复并保存
+              回复并记录
             </Button>
             <Button variant="secondary" onClick={handleSkipAndSave}>
               跳过
