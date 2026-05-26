@@ -8,7 +8,6 @@ import { chatWithAI } from "@/lib/ai";
 import { getProfile } from "@/actions/profile";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
@@ -18,9 +17,8 @@ export default function NewJournal() {
   const { toast } = useToast();
 
   const [content, setContent] = useState("");
-  const [aiReply, setAiReply] = useState("");
-  const [aiSummary, setAiSummary] = useState("");
-  const [userReply, setUserReply] = useState("");
+  const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
+  const [chatInput, setChatInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -67,8 +65,8 @@ export default function NewJournal() {
     setError("");
     try {
       const { reply, summary } = await chatWithAI(content, apiKey);
-      setAiReply(reply);
-      setAiSummary(summary);
+      setChatMessages([{ role: "assistant", content: reply }]);
+      setLastSavedContent(content);
       setChatting(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "连接失败");
@@ -77,19 +75,46 @@ export default function NewJournal() {
     }
   }
 
-  async function handleReplyAndSave() {
+  async function continueChat() {
+    if (!chatInput.trim() || !apiKey) return;
+    const userMsg = chatInput.trim();
+    setChatInput("");
+    const updated = [...chatMessages, { role: "user", content: userMsg }];
+    setChatMessages(updated);
+    setLoading(true);
+
     try {
-      await createEntryWithAI(content, [], birthdate, aiReply, aiSummary, userReply || undefined, dayOverride);
-      toast("已保存", "success");
-      setSaved(true);
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: `最初的记录：「${content.slice(0, 500)}」\n\n之前的对话：\n${updated.map((m, i) => (m.role === "assistant" ? "内心：" : "我：") + (i === updated.length - 1 ? m.content : m.content.slice(0, 200))).join("\n")}\n\n请继续回应我，可以先简短共鸣，然后继续追问，引导深入思考。`,
+          apiKey,
+        }),
+      });
+      if (!res.ok) throw new Error("连接失败");
+      const data = await res.json();
+      setChatMessages([...updated, { role: "assistant", content: data.reply }]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "保存失败");
+      setError(e instanceof Error ? e.message : "连接失败");
+    } finally {
+      setLoading(false);
     }
   }
 
-  async function handleSkipAndSave() {
+  async function finishChat() {
+    const userMsgs = chatMessages.filter((m) => m.role === "user");
+    if (userMsgs.length === 0) {
+      toast("那就下次再聊吧~", "info");
+      setSaved(true);
+      return;
+    }
     try {
-      await createEntryWithAI(content, [], birthdate, aiReply, aiSummary, undefined, dayOverride);
+      const fullContent = [content, ...userMsgs.map((m) => m.content)].join("\n\n");
+      const lastAi = [...chatMessages].reverse().find((m) => m.role === "assistant")?.content ?? "";
+      const summaryMatch = lastAi.match(/【摘要[：:]\s*(.+?)】/);
+      const summary = summaryMatch ? summaryMatch[1] : fullContent.slice(0, 40);
+      await createEntryWithAI(fullContent, [], birthdate, chatMessages.filter((m) => m.role === "assistant").map((m) => m.content).join("\n---\n"), summary, undefined, dayOverride);
       toast("已保存", "success");
       setSaved(true);
     } catch (e) {
@@ -205,8 +230,8 @@ export default function NewJournal() {
               </Button>
             )}
             <Button variant="secondary" onClick={() => {
-              setContent(""); setAiReply(""); setAiSummary("");
-              setUserReply(""); setSaved(false); setChatting(false); setError("");
+              setContent(""); setChatMessages([]); setChatInput("");
+              setSaved(false); setChatting(false); setError("");
               setMode("normal");
             }} className="py-3 px-8">再写一条</Button>
             <Button variant="ghost" onClick={() => router.push("/timeline")} className="py-3 px-8">
@@ -325,44 +350,55 @@ export default function NewJournal() {
         </div>
       )}
 
-      {/* Step 2: AI chat */}
-      {mode !== "guided" && chatting && aiReply && (
+      {/* Step 2: Multi-turn AI chat */}
+      {mode !== "guided" && chatting && (
         <div className="flex-1 flex flex-col">
-          <GlassCard className="p-4 mb-3">
-            <p className="text-xs text-slate-400 mb-1">你说：</p>
-            <p className="text-sm whitespace-pre-wrap">{content}</p>
-          </GlassCard>
+          <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+            <GlassCard className="p-3">
+              <p className="text-xs text-slate-400 mb-1">你说：</p>
+              <p className="text-sm whitespace-pre-wrap">{content}</p>
+            </GlassCard>
 
-          <div className="p-4 bg-indigo-50/60 backdrop-blur-sm rounded-2xl border border-indigo-100/50 mb-3">
-            <p className="text-xs text-indigo-400 mb-1">深处的回声：</p>
-            <p className="text-sm whitespace-pre-wrap">{aiReply}</p>
+            {chatMessages.map((msg, i) => (
+              <div
+                key={i}
+                className={`p-3 rounded-2xl ${
+                  msg.role === "assistant"
+                    ? "bg-indigo-50/70 backdrop-blur-sm border border-indigo-100/40"
+                    : "bg-white/60 backdrop-blur-sm border border-white/60"
+                }`}
+              >
+                <p className="text-xs text-slate-400 mb-1">
+                  {msg.role === "assistant" ? "深处的回声" : "你"}
+                </p>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex gap-1.5 items-center px-3 py-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-300 animate-typing-dot" style={{ animationDelay: "0s" }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-300 animate-typing-dot" style={{ animationDelay: "0.2s" }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-300 animate-typing-dot" style={{ animationDelay: "0.4s" }} />
+              </div>
+            )}
           </div>
 
-          {/* Editable summary */}
-          <div className="mb-3">
-            <p className="text-xs text-slate-400 mb-1">摘要（可修改）：</p>
-            <Input
-              value={aiSummary}
-              onChange={(e) => setAiSummary(e.target.value)}
-              className="w-full text-sm"
+          <div className="flex gap-2">
+            <Textarea
+              glass
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="可以使用豆包输入法语音聊天哦"
+              className="flex-1 min-h-[56px]"
             />
-          </div>
-
-          <Textarea
-            glass
-            value={userReply}
-            onChange={(e) => setUserReply(e.target.value)}
-            placeholder="回应，或者直接跳过..."
-            className="w-full min-h-[80px] mb-3"
-          />
-
-          <div className="flex gap-3">
-            <Button onClick={handleReplyAndSave} disabled={!userReply.trim()} className="flex-1">
-              回复并记录
-            </Button>
-            <Button variant="secondary" onClick={handleSkipAndSave}>
-              跳过
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button onClick={continueChat} disabled={loading || !chatInput.trim()}>
+                发送
+              </Button>
+              <Button variant="secondary" onClick={finishChat} disabled={loading}>
+                今天就聊到这里吧
+              </Button>
+            </div>
           </div>
         </div>
       )}
