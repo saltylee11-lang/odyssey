@@ -132,7 +132,8 @@ export default function Timeline() {
       const scrollLeft = scrollRef.current.scrollLeft;
       const viewWidth = scrollRef.current.clientWidth;
       const centerScroll = scrollLeft + viewWidth / 2;
-      const dayIdx = Math.round(centerScroll / TICK_WIDTH - VISIBLE_DAYS);
+      const rawIdx = Math.round(centerScroll / TICK_WIDTH - VISIBLE_DAYS);
+      const dayIdx = Math.max(1, rawIdx);
 
       if (dayIdx !== selectedDayRef.current) {
         selectedDayRef.current = dayIdx;
@@ -144,8 +145,8 @@ export default function Timeline() {
       }
 
       // Update visible range (with larger threshold to minimize re-renders)
-      const startVisible = Math.max(1, Math.floor((scrollLeft / TICK_WIDTH) - VISIBLE_DAYS - BUFFER_DAYS));
-      const endVisible = Math.ceil(((scrollLeft + viewWidth) / TICK_WIDTH) + BUFFER_DAYS);
+      const startVisible = Math.max(1, Math.floor(scrollLeft / TICK_WIDTH - VISIBLE_DAYS - BUFFER_DAYS));
+      const endVisible = Math.ceil((scrollLeft + viewWidth) / TICK_WIDTH + BUFFER_DAYS);
       setVisStart((prev) => Math.abs(prev - startVisible) > 50 ? startVisible : prev);
       setVisEnd((prev) => Math.abs(prev - endVisible) > 50 ? endVisible : prev);
     });
