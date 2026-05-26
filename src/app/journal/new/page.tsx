@@ -103,7 +103,7 @@ export default function NewJournal() {
     setGuideStarted(true);
     try {
       const contextPrompt = lastSavedContent
-        ? `我刚才记录了这样一段想法：「${lastSavedContent.slice(0, 300)}」。请以我内心深处另一个自己的身份，基于我刚才的这段记录，向我提出一个开放性的追问，引导我继续深挖。不要泛泛而谈，要具体针对我刚才说的内容。语气温柔、好奇、不带评判。`
+        ? `我刚才记录了这样一段想法：「${lastSavedContent}」。请以我内心深处另一个自己的身份，基于我刚才的这段记录，向我提出一个开放性的追问，引导我继续深挖。不要泛泛而谈，要具体针对我刚才说的内容。语气温柔、好奇、不带评判。`
         : "请以我内心深处另一个自己的身份，向我提出一个开放性的问题。要温柔、好奇、不带评判，引导我探索此刻的内心。";
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -114,7 +114,7 @@ export default function NewJournal() {
       const data = await res.json();
       const msgs: { role: string; content: string }[] = [];
       if (lastSavedContent) {
-        msgs.push({ role: "user", content: lastSavedContent.slice(0, 300) });
+        msgs.push({ role: "user", content: lastSavedContent });
       }
       msgs.push({ role: "assistant", content: data.reply });
       setGuideMessages(msgs);
@@ -139,7 +139,7 @@ export default function NewJournal() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: `${lastSavedContent ? `最初的记录：「${lastSavedContent.slice(0, 300)}」\n\n` : ""}之前的对话：\n${updated.map((m) => (m.role === "assistant" ? "内心：" : "我：") + m.content).join("\n")}\n\n请继续以我内心另一个自己的身份回应我。可以先简短回应，然后继续提问引导我深入思考。紧扣最初记录的主题。`,
+          content: `${lastSavedContent ? `最初的记录：「${lastSavedContent}」\n\n` : ""}之前的对话：\n${updated.map((m) => (m.role === "assistant" ? "内心：" : "我：") + m.content).join("\n")}\n\n请继续以我内心另一个自己的身份回应我。可以先简短回应，然后继续提问引导我深入思考。紧扣最初记录的主题。`,
           apiKey,
         }),
       });
@@ -154,13 +154,20 @@ export default function NewJournal() {
   }
 
   async function saveGuidedSession() {
+    const userMessages = guideMessages.filter((m) => m.role === "user");
+    const aiMessages = guideMessages.filter((m) => m.role === "assistant");
+
+    // Don't save if user hasn't replied (only the auto-added initial content exists)
+    const actualReplies = userMessages.filter((m) => m.content !== lastSavedContent);
+    if (actualReplies.length === 0) {
+      toast("没有什么要记录的，下次再聊", "info");
+      setSaved(true);
+      return;
+    }
+
     try {
-      // Save the entire conversation as one entry
-      const fullContent = guideMessages
-        .filter((m) => m.role === "user")
-        .map((m) => m.content)
-        .join("\n\n");
-      const lastAiReply = [...guideMessages].reverse().find((m) => m.role === "assistant")?.content ?? "";
+      const fullContent = actualReplies.map((m) => m.content).join("\n\n");
+      const lastAiReply = [...aiMessages].reverse()[0]?.content ?? "";
       const summaryMatch = lastAiReply.match(/【摘要[：:]\s*(.+?)】/);
       const summary = summaryMatch ? summaryMatch[1] : fullContent.slice(0, 40);
 
@@ -168,7 +175,7 @@ export default function NewJournal() {
         fullContent,
         [],
         birthdate,
-        guideMessages.filter((m) => m.role === "assistant").map((m) => m.content).join("\n---\n"),
+        aiMessages.map((m) => m.content).join("\n---\n"),
         summary,
         undefined,
         dayOverride
@@ -283,7 +290,7 @@ export default function NewJournal() {
                     发送
                   </Button>
                   <Button variant="secondary" onClick={saveGuidedSession} disabled={guideMessages.length === 0}>
-                    结束
+                    下次再聊吧
                   </Button>
                 </div>
               </div>
