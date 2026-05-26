@@ -47,6 +47,7 @@ export default function Timeline() {
 
   useEffect(() => {
     setMounted(true);
+    let dayNum = 0;
     async function load() {
       try {
         const profile = await getProfile();
@@ -55,7 +56,7 @@ export default function Timeline() {
 
         const bd = new Date(profile.birthdate);
         const today = new Date();
-        const dayNum = Math.floor((today.getTime() - bd.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        dayNum = Math.floor((today.getTime() - bd.getTime()) / (1000 * 60 * 60 * 24)) + 1;
         setTotalDays(dayNum);
         todayDayNum.current = dayNum;
 
