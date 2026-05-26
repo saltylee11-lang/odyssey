@@ -97,28 +97,26 @@ export default function Timeline() {
   useEffect(() => {
     if (!loading || totalDays <= 0 || !scrollRef.current) return;
 
-    const viewWidth = scrollRef.current.clientWidth;
-    const targetLeft = (totalDays + VISIBLE_DAYS) * TICK_WIDTH - viewWidth / 2;
-
     isAutoScrolling.current = true;
     selectedDayRef.current = totalDays;
     setSelectedDay(totalDays);
     setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
 
-    scrollRef.current.scrollLeft = Math.max(0, targetLeft);
+    // Double rAF: wait for the 300,000px inner div to fully layout before scroll
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!scrollRef.current) return;
+        const targetLeft = (totalDays + VISIBLE_DAYS) * TICK_WIDTH - scrollRef.current.clientWidth / 2;
+        scrollRef.current.scrollLeft = Math.max(0, targetLeft);
 
-    // After scroll settles, force-correct to today regardless of scroll position
-    const settleTimer = setTimeout(() => {
-      isAutoScrolling.current = false;
-      // Force today — don't rely on scroll event detection
-      const dayEntries = entriesByDay.current.get(totalDays);
-      if (dayEntries && dayEntries.length > 0) {
-        setSelectedDay(totalDays);
-        setSelectedEntries(dayEntries);
-      }
-    }, 1000);
-
-    return () => clearTimeout(settleTimer);
+        setTimeout(() => {
+          isAutoScrolling.current = false;
+          selectedDayRef.current = totalDays;
+          setSelectedDay(totalDays);
+          setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
+        }, 500);
+      });
+    });
   }, [loading, totalDays]);
 
   // Throttled scroll handler — only active when user manually scrolls
@@ -158,19 +156,23 @@ export default function Timeline() {
 
   function jumpToDay(target: number) {
     if (isNaN(target) || target < 1 || !scrollRef.current) return;
-    const viewWidth = scrollRef.current.clientWidth;
-    const targetLeft = (target + VISIBLE_DAYS) * TICK_WIDTH - viewWidth / 2;
     isAutoScrolling.current = true;
     selectedDayRef.current = target;
     setSelectedDay(target);
     setSelectedEntries(entriesByDay.current.get(target) ?? []);
-    scrollRef.current.scrollLeft = Math.max(0, targetLeft);
-    // Force correct after scroll animation ends
-    setTimeout(() => {
-      isAutoScrolling.current = false;
-      setSelectedDay(target);
-      setSelectedEntries(entriesByDay.current.get(target) ?? []);
-    }, 200);
+
+    requestAnimationFrame(() => {
+      if (!scrollRef.current) return;
+      const targetLeft = (target + VISIBLE_DAYS) * TICK_WIDTH - scrollRef.current.clientWidth / 2;
+      scrollRef.current.scrollLeft = Math.max(0, targetLeft);
+
+      setTimeout(() => {
+        isAutoScrolling.current = false;
+        selectedDayRef.current = target;
+        setSelectedDay(target);
+        setSelectedEntries(entriesByDay.current.get(target) ?? []);
+      }, 400);
+    });
   }
 
   return (
