@@ -35,10 +35,10 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm tracking-wide transition-colors"
+                className="text-[15px] tracking-wider transition-colors font-[450]"
                 style={{
                   color: active ? "#6366f1" : "#999",
-                  fontWeight: active ? 500 : 400,
+                  fontWeight: active ? 520 : 450,
                 }}
               >
                 {item.label}
