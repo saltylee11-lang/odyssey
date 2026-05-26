@@ -156,15 +156,23 @@ export default function Timeline() {
     setSelectedDay(target);
     setSelectedEntries(entriesByDay.current.get(target) ?? []);
 
-    const el = document.querySelector(`[data-day="${target}"]`);
-    if (el) {
-      el.scrollIntoView({ inline: "center", behavior: "instant" });
-    }
-    setTimeout(() => {
-      isAutoScrolling.current = false;
-      setSelectedDay(target);
-      setSelectedEntries(entriesByDay.current.get(target) ?? []);
-    }, 300);
+    // Expand visible range to include target day so it gets rendered
+    setVisStart(Math.max(1, target - BUFFER_DAYS));
+    setVisEnd(target + BUFFER_DAYS);
+
+    // Wait a frame for React to render the target tick, then scroll to it
+    requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-day="${target}"]`);
+      if (el) {
+        el.scrollIntoView({ inline: "center", behavior: "instant" });
+      }
+      setTimeout(() => {
+        isAutoScrolling.current = false;
+        selectedDayRef.current = target;
+        setSelectedDay(target);
+        setSelectedEntries(entriesByDay.current.get(target) ?? []);
+      }, 300);
+    });
   }
 
   return (
