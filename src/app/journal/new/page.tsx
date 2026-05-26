@@ -160,7 +160,7 @@ export default function NewJournal() {
     // Don't save if user hasn't replied (only the auto-added initial content exists)
     const actualReplies = userMessages.filter((m) => m.content !== lastSavedContent);
     if (actualReplies.length === 0) {
-      toast("没有什么要记录的，下次再聊", "info");
+      toast("那就下次再聊吧~", "info");
       setSaved(true);
       return;
     }

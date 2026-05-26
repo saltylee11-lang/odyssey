@@ -86,8 +86,10 @@ export default function Timeline() {
         if (!data.user) router.push("/");
       } finally {
         setLoading(false);
-        // Auto-scroll to today after data loads
-        setTimeout(() => jumpToTodayInner(dayNum), 100);
+        // Check URL for target day, otherwise scroll to today
+        const params = new URLSearchParams(window.location.search);
+        const targetDay = parseInt(params.get("day") || "");
+        setTimeout(() => jumpToTodayInner(!isNaN(targetDay) && targetDay >= 1 ? targetDay : dayNum), 100);
       }
     }
     load();

@@ -136,7 +136,7 @@ export default function JournalDetail() {
     setDeleting(true);
     try {
       await deleteEntry(entry.id);
-      router.push("/timeline");
+      router.push(`/timeline?day=${entry.dayNumber}`);
       toast("已删除", "success");
     } catch {
       toast("删除失败", "error");
