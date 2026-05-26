@@ -133,8 +133,9 @@ export default function NewJournal() {
     if (!key) { setError("请先在设置里填写 DeepSeek 密钥"); return; }
     setGuideLoading(true);
     try {
-      const contextPrompt = lastSavedContent
-        ? `我刚才记录了这样一段想法：「${lastSavedContent}」。请以我内心深处另一个自己的身份，基于我刚才的这段记录，向我提出一个开放性的追问，引导我继续深挖。不要泛泛而谈，要具体针对我刚才说的内容。语气温柔、好奇、不带评判。`
+      const ctx = lastSavedContent ? lastSavedContent.slice(0, 600) : "";
+      const contextPrompt = ctx
+        ? `我刚才记录了这样一段想法：「${ctx}」。请以我内心深处另一个自己的身份，基于我刚才的这段记录，向我提出一个开放性的追问，引导我继续深挖。不要泛泛而谈，要具体针对我刚才说的内容。语气温柔、好奇、不带评判。`
         : "请以我内心深处另一个自己的身份，向我提出一个开放性的问题。要温柔、好奇、不带评判，引导我探索此刻的内心。";
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -144,8 +145,8 @@ export default function NewJournal() {
       if (!res.ok) throw new Error("连接失败");
       const data = await res.json();
       const msgs: { role: string; content: string }[] = [];
-      if (lastSavedContent) {
-        msgs.push({ role: "user", content: lastSavedContent });
+      if (ctx) {
+        msgs.push({ role: "user", content: ctx });
       }
       msgs.push({ role: "assistant", content: data.reply });
       setGuideMessages(msgs);
