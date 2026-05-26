@@ -234,7 +234,7 @@ export default function Timeline() {
             ref={scrollRef}
             className="w-full h-full overflow-x-auto no-scrollbar"
             style={{
-              scrollSnapType: "x mandatory",
+              scrollSnapType: "x proximity",
               WebkitOverflowScrolling: "touch",
               willChange: "scroll-position",
               touchAction: "pan-x",
@@ -260,7 +260,6 @@ export default function Timeline() {
                     style={{
                       left: (dayIdx + VISIBLE_DAYS) * TICK_WIDTH,
                       bottom: 0,
-                      scrollSnapAlign: "center",
                     }}
                   >
                     {/* Day label at fixed position */}
