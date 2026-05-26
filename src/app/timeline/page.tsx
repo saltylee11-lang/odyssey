@@ -160,7 +160,7 @@ export default function Timeline() {
   }
 
   return (
-    <main className="flex-1 flex flex-col max-w-lg mx-auto w-full h-[100dvh] overflow-hidden">
+    <main className="flex-1 flex flex-col max-w-lg mx-auto w-full h-dvh overflow-hidden" style={{ overscrollBehavior: "none" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-6 pb-2 flex-shrink-0">
         <Link href="/dashboard" className="text-slate-400 hover:text-slate-600 text-sm">← 返回</Link>
