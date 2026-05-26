@@ -93,30 +93,34 @@ export default function Timeline() {
   }, [router]);
 
   // Auto-scroll to today + init selected day/entries
-  // Auto-scroll to today and lock it
+  // Auto-scroll to today using scrollIntoView (avoids pixel calc issues)
   useEffect(() => {
-    if (!loading || totalDays <= 0 || !scrollRef.current) return;
+    if (!loading || totalDays <= 0) return;
 
     isAutoScrolling.current = true;
     selectedDayRef.current = totalDays;
     setSelectedDay(totalDays);
     setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
 
-    // Double rAF: wait for the 300,000px inner div to fully layout before scroll
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (!scrollRef.current) return;
-        const targetLeft = (totalDays + VISIBLE_DAYS) * TICK_WIDTH - scrollRef.current.clientWidth / 2;
-        scrollRef.current.scrollLeft = Math.max(0, targetLeft);
-
+    // Wait for the tick elements to render, then scroll today into view
+    const tryScroll = (attempts: number) => {
+      if (attempts <= 0) {
+        isAutoScrolling.current = false;
+        return;
+      }
+      const el = document.querySelector(`[data-day="${totalDays}"]`);
+      if (el) {
+        el.scrollIntoView({ inline: "center", behavior: "instant" });
         setTimeout(() => {
           isAutoScrolling.current = false;
-          selectedDayRef.current = totalDays;
           setSelectedDay(totalDays);
           setSelectedEntries(entriesByDay.current.get(totalDays) ?? []);
-        }, 500);
-      });
-    });
+        }, 400);
+      } else {
+        requestAnimationFrame(() => tryScroll(attempts - 1));
+      }
+    };
+    requestAnimationFrame(() => tryScroll(20));
   }, [loading, totalDays]);
 
   // Throttled scroll handler — only active when user manually scrolls
@@ -155,24 +159,21 @@ export default function Timeline() {
   const totalWidth = (Math.max(totalDays + 10000, MAX_DAY) + VISIBLE_DAYS * 2) * TICK_WIDTH;
 
   function jumpToDay(target: number) {
-    if (isNaN(target) || target < 1 || !scrollRef.current) return;
+    if (isNaN(target) || target < 1) return;
     isAutoScrolling.current = true;
     selectedDayRef.current = target;
     setSelectedDay(target);
     setSelectedEntries(entriesByDay.current.get(target) ?? []);
 
-    requestAnimationFrame(() => {
-      if (!scrollRef.current) return;
-      const targetLeft = (target + VISIBLE_DAYS) * TICK_WIDTH - scrollRef.current.clientWidth / 2;
-      scrollRef.current.scrollLeft = Math.max(0, targetLeft);
-
-      setTimeout(() => {
-        isAutoScrolling.current = false;
-        selectedDayRef.current = target;
-        setSelectedDay(target);
-        setSelectedEntries(entriesByDay.current.get(target) ?? []);
-      }, 400);
-    });
+    const el = document.querySelector(`[data-day="${target}"]`);
+    if (el) {
+      el.scrollIntoView({ inline: "center", behavior: "instant" });
+    }
+    setTimeout(() => {
+      isAutoScrolling.current = false;
+      setSelectedDay(target);
+      setSelectedEntries(entriesByDay.current.get(target) ?? []);
+    }, 300);
   }
 
   return (
@@ -263,6 +264,7 @@ export default function Timeline() {
                 return (
                   <div
                     key={dayIdx}
+                    data-day={dayIdx}
                     className="absolute"
                     style={{
                       left: (dayIdx + VISIBLE_DAYS) * TICK_WIDTH,
