@@ -10,18 +10,14 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { TagInput } from "@/components/ui/TagInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
-
-const TAG_SUGGESTIONS = ["工作", "生活", "感悟", "梦境", "童年", "未来", "恐惧", "爱", "死亡", "自由"];
 
 export default function NewJournal() {
   const router = useRouter();
   const { toast } = useToast();
 
   const [content, setContent] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
   const [aiReply, setAiReply] = useState("");
   const [aiSummary, setAiSummary] = useState("");
   const [userReply, setUserReply] = useState("");
@@ -55,7 +51,7 @@ export default function NewJournal() {
   async function handleSave() {
     if (!content.trim()) return;
     try {
-      await createEntry(content, tags, birthdate, dayOverride);
+      await createEntry(content, [], birthdate, dayOverride);
       toast("已保存", "success");
       setSaved(true);
     } catch (e) {
@@ -82,7 +78,7 @@ export default function NewJournal() {
 
   async function handleReplyAndSave() {
     try {
-      await createEntryWithAI(content, tags, birthdate, aiReply, aiSummary, userReply || undefined, dayOverride);
+      await createEntryWithAI(content, [], birthdate, aiReply, aiSummary, userReply || undefined, dayOverride);
       toast("已保存", "success");
       setSaved(true);
     } catch (e) {
@@ -92,7 +88,7 @@ export default function NewJournal() {
 
   async function handleSkipAndSave() {
     try {
-      await createEntryWithAI(content, tags, birthdate, aiReply, aiSummary, undefined, dayOverride);
+      await createEntryWithAI(content, [], birthdate, aiReply, aiSummary, undefined, dayOverride);
       toast("已保存", "success");
       setSaved(true);
     } catch (e) {
@@ -164,7 +160,7 @@ export default function NewJournal() {
 
       await createEntryWithAI(
         fullContent,
-        tags,
+        [],
         birthdate,
         guideMessages.filter((m) => m.role === "assistant").map((m) => m.content).join("\n---\n"),
         summary,
@@ -189,13 +185,13 @@ export default function NewJournal() {
             {apiKey && (
               <Button onClick={() => {
                 setSaved(false); setChatting(false); setError("");
-                setMode("guided"); setContent(""); setTags([]);
+                setMode("guided"); setContent("");
               }} className="py-3 px-8 bg-indigo-500">
                 深入对话
               </Button>
             )}
             <Button variant="secondary" onClick={() => {
-              setContent(""); setTags([]); setAiReply(""); setAiSummary("");
+              setContent(""); setAiReply(""); setAiSummary("");
               setUserReply(""); setSaved(false); setChatting(false); setError("");
               setMode("normal");
             }} className="py-3 px-8">再写一条</Button>
@@ -300,13 +296,6 @@ export default function NewJournal() {
             className="flex-1 min-h-[180px] w-full"
             autoFocus
           />
-          <div className="mt-3">
-            <TagInput
-              tags={tags}
-              onChange={setTags}
-              suggestions={TAG_SUGGESTIONS}
-            />
-          </div>
           {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
           <div className="flex gap-3 mt-4">
             <Button onClick={handleSave} disabled={!content.trim()} className="flex-1">

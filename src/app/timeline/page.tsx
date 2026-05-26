@@ -318,15 +318,6 @@ export default function Timeline() {
                       ? format(new Date(entry.createdAt), "HH:mm")
                       : format(new Date(entry.createdAt), "M月d日 HH:mm")}
                   </p>
-                  {entry.tags?.length > 0 && (
-                    <div className="flex gap-1">
-                      {entry.tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-400">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </Link>
             ))}

@@ -19,7 +19,6 @@ interface DBEntry {
   id: string;
   content: string;
   summary: string;
-  tags: string[];
   dayNumber: number;
   createdAt: Date | string;
   messages?: AIMessage[];
