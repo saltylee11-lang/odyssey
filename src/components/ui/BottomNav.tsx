@@ -11,7 +11,7 @@ const navItems = [
   { href: "/settings", label: "设置" },
 ];
 
-const hiddenOn = ["/", "/journal/new"];
+const hiddenOn = ["/"];
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -20,12 +20,12 @@ export function BottomNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom,0px)]">
       <div
-        className="mx-auto max-w-lg"
+        className="mx-auto max-w-lg rounded-t-2xl overflow-hidden"
         style={{
           background: "rgba(248,248,252,0.72)",
           backdropFilter: "blur(24px) saturate(180%)",
           WebkitBackdropFilter: "blur(24px) saturate(180%)",
-          borderTop: "0.5px solid rgba(0,0,0,0.08)",
+          borderTop: "0.5px solid rgba(0,0,0,0.06)",
         }}
       >
         <div className="flex justify-around px-6 py-3">

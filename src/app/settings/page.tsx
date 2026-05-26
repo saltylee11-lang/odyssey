@@ -155,23 +155,14 @@ export default function Settings() {
           <p className="text-sm text-slate-600">{entryCount} 条</p>
         </div>
 
-        <div className="p-4 border-b border-slate-200/40">
-          <p className="text-xs text-slate-400 mb-1">云端存储</p>
-          <p className="text-sm text-emerald-500">✓ 已启用</p>
-        </div>
-
-        <div className="p-4 border-b border-slate-200/40">
-          <button onClick={handleExport}
-            className="text-sm text-indigo-500 hover:text-indigo-600 cursor-pointer">
-            导出备份
-          </button>
-        </div>
-
-        <div className="p-4 border-b border-slate-200/40">
-          <label className="text-sm text-indigo-500 hover:text-indigo-600 cursor-pointer">
-            导入备份
-            <input type="file" accept=".json" className="hidden" onChange={handleImport} />
-          </label>
+        <div className="p-4 border-b border-slate-200/40 flex items-center justify-between">
+          <span className="text-xs text-emerald-500">✓ 云端</span>
+          <span className="flex gap-4">
+            <button onClick={handleExport} className="text-xs text-indigo-400 hover:text-indigo-600 cursor-pointer">导出</button>
+            <label className="text-xs text-indigo-400 hover:text-indigo-600 cursor-pointer">
+              导入<input type="file" accept=".json" className="hidden" onChange={handleImport} />
+            </label>
+          </span>
         </div>
 
         <div className="p-4">
