@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createEntry, createEntryWithAI } from "@/actions/journal";
@@ -34,7 +34,6 @@ export default function NewJournal() {
   const [guideInput, setGuideInput] = useState("");
   const [guideLoading, setGuideLoading] = useState(false);
   const [guideStarted, setGuideStarted] = useState(false);
-  const triggerGuided = useRef(false);
 
   useEffect(() => {
     setApiKey(localStorage.getItem("odyssey_api_key") ?? "");
