@@ -35,7 +35,7 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-base tracking-[0.15em] transition-colors"
+                className="text-base transition-colors"
                 style={{
                   color: active ? "#6366f1" : "#999",
                   fontWeight: active ? 500 : 400,

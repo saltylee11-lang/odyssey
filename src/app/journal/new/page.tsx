@@ -47,6 +47,13 @@ export default function NewJournal() {
     }).catch(() => router.push("/"));
   }, [router]);
 
+  // Auto-start guided session when entering guided mode
+  useEffect(() => {
+    if (mode === "guided" && !guideStarted && apiKey) {
+      startGuidedSession();
+    }
+  }, [mode, apiKey]);
+
   async function handleSave() {
     if (!content.trim()) return;
     try {
@@ -259,21 +266,8 @@ export default function NewJournal() {
       {mode === "guided" && (
         <div className="flex-1 flex flex-col">
           {!guideStarted ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center">
-              <p className="text-5xl mb-4">🧠</p>
-              <h3 className="text-lg font-medium text-slate-700 mb-2">深入对话</h3>
-              <p className="text-sm text-slate-400 mb-6 max-w-xs leading-relaxed">
-                AI 将以你内心的另一个自己的身份，<br />向你提问，引导你探索深处的想法。
-              </p>
-              <Button onClick={startGuidedSession} disabled={guideLoading} className="px-8 py-3">
-                {guideLoading ? "连接中..." : "开始对话"}
-              </Button>
-              <button
-                onClick={() => setMode("normal")}
-                className="mt-4 text-sm text-slate-400 hover:text-slate-600 cursor-pointer"
-              >
-                返回
-              </button>
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-slate-400 text-sm">连接中...</p>
             </div>
           ) : (
             <>
