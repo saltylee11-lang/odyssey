@@ -65,21 +65,39 @@ export function TagInput({ tags, onChange, suggestions = [], placeholder = "添�
           className="flex-1 min-w-[80px] bg-transparent text-sm outline-none placeholder:text-slate-300 py-1 px-1"
         />
       </div>
-      {showSuggestions && filteredSuggestions.length > 0 && (
+      {showSuggestions && input.trim() && (
         <div className="absolute top-full mt-1 left-0 right-0 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-xl shadow-lg z-10 py-1">
-          {filteredSuggestions.map((s) => (
+          {filteredSuggestions.length > 0 ? (
+            filteredSuggestions.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  addTag(s);
+                }}
+                className="w-full text-left px-3 py-1.5 text-sm text-slate-600 hover:bg-indigo-50"
+              >
+                {s}
+              </button>
+            ))
+          ) : (
+            <div className="px-3 py-1.5 text-xs text-slate-400">
+              按回车添加自定义标签
+            </div>
+          )}
+          {input.trim() && !suggestions.includes(input.trim()) && filteredSuggestions.length > 0 && (
             <button
-              key={s}
               type="button"
               onMouseDown={(e) => {
                 e.preventDefault();
-                addTag(s);
+                addTag(input);
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-slate-600 hover:bg-indigo-50"
+              className="w-full text-left px-3 py-1.5 text-sm text-indigo-500 hover:bg-indigo-50 border-t border-slate-100"
             >
-              {s}
+              添加 "{input.trim()}"
             </button>
-          ))}
+          )}
         </div>
       )}
     </div>
