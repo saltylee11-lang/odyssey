@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Skeleton, TextSkeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
-import type { JournalEntry } from "@/lib/storage";
+
 
 interface DBEntry {
   id: string;
@@ -73,7 +73,7 @@ export default function JournalDetail() {
     try {
       // Build conversation context
       const contextMessages = messages.map((m) => `${m.role === "assistant" ? "回声" : "你"}: ${m.content}`).join("\n\n");
-      const prompt = `以下是之前的对话：\n\n${contextMessages}\n\n用户的新回应：${chatInput}`;
+      const prompt = `我的日记：${entry.content}\n\n以下是之前的对话：\n\n${contextMessages}\n\n用户的新回应：${chatInput}`;
       const { reply, summary } = await chatWithAI(prompt, apiKey);
 
       const nextSeq = messages.length + 1;
@@ -81,6 +81,7 @@ export default function JournalDetail() {
       await addAIMessage(entry.id, "assistant", reply, nextSeq + 1);
       await updateEntrySummary(entry.id, summary);
 
+      setEntry({ ...entry, summary });
       setMessages((prev) => [
         ...prev,
         { id: `temp-${Date.now()}`, sequence: nextSeq, role: "user", content: chatInput },
@@ -161,7 +162,8 @@ export default function JournalDetail() {
   return (
     <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
 
-      <p className="text-sm text-slate-400 mb-6">
+      <h1 className="journal-title">第 {entry.dayNumber} 天的记录</h1>
+      <p className="text-sm text-slate-500 mb-6">
         {format(new Date(entry.createdAt as string | Date), "yyyy年M月d日 HH:mm", { locale: zhCN })}
       </p>
 

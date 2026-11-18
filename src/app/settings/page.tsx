@@ -117,7 +117,7 @@ export default function Settings() {
   return (
     <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
       <div className="flex items-center justify-center mb-6">
-        <h1 className="font-medium text-slate-500 text-sm">设置</h1>
+        <h1 className="journal-title">设置</h1>
       </div>
 
       {/* Avatar */}
@@ -150,8 +150,8 @@ export default function Settings() {
           <p className="text-sm text-slate-600">{profile.birthdate}</p>
         </div>
 
-        <div className="p-4 border-b border-slate-200/40">
-          <p className="text-xs text-slate-400 mb-2">DeepSeek 密钥</p>
+        <div id="ai" className="p-4 border-b border-slate-200/40">
+          <label htmlFor="deepseek-key" className="block text-sm mb-2">DeepSeek 密钥</label><p className="text-xs text-slate-500 mb-3">用于 AI 对话。只写日记可以跳过。</p>
           <ApiKeyInput />
         </div>
 
@@ -190,13 +190,13 @@ function ApiKeyInput() {
     return "";
   });
   const [saved, setSaved] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(!key);
   const hasKey = !!key;
 
   if (!editing && hasKey) {
     return (
       <div className="flex gap-2">
-        <Input type="password" value="••••••••" disabled className="flex-1 text-slate-400" />
+        <Input id="deepseek-key" type="password" value="••••••••" disabled className="flex-1 text-slate-400" />
         <Button variant="secondary" onClick={() => setEditing(true)} className="px-3 py-1 text-xs">修改</Button>
       </div>
     );
@@ -204,8 +204,8 @@ function ApiKeyInput() {
 
   return (
     <div className="flex gap-2">
-      <Input type="password" placeholder="sk-..." value={key} onChange={(e) => setKey(e.target.value)} className="flex-1 text-sm" />
-      <Button onClick={() => { localStorage.setItem("odyssey_api_key", key); setSaved(true); setEditing(false); setTimeout(() => setSaved(false), 2000); }} className="px-3 py-1 text-xs">{saved ? "已保存" : "保存"}</Button>
+      <Input id="deepseek-key" type="password" placeholder="sk-..." value={key} onChange={(e) => setKey(e.target.value)} className="flex-1 text-sm" />
+      <Button onClick={() => { localStorage.setItem("odyssey_api_key", key.trim()); setSaved(true); setEditing(!key.trim()); setTimeout(() => setSaved(false), 2000); }} className="px-3 py-1 text-xs">{saved ? "已保存" : "保存"}</Button>
     </div>
   );
 }

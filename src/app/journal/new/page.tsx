@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createEntry, createEntryWithAI } from "@/actions/journal";
@@ -20,14 +20,15 @@ export default function NewJournal() {
   const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
   const [error, setError] = useState("");
   const [chatting, setChatting] = useState(false);
+  const [summary, setSummary] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [dayOverride, setDayOverride] = useState<number | undefined>();
   const [mode, setMode] = useState<"normal" | "guided">("normal");
-  const [lastSavedContent, setLastSavedContent] = useState("");
 
   // Guided mode state
   const [guideMessages, setGuideMessages] = useState<{ role: string; content: string }[]>([]);
@@ -37,42 +38,63 @@ export default function NewJournal() {
   useEffect(() => {
     setApiKey(localStorage.getItem("odyssey_api_key") ?? "");
     const params = new URLSearchParams(window.location.search);
-    if (params.get("mode") === "guided") {
+    let cancelled = false;
+    const key = localStorage.getItem("odyssey_api_key");
+    const guided = params.get("mode") === "guided";
+    const start = setTimeout(async () => {
+      if (!guided) return;
       setMode("guided");
-      // Auto-start from URL param after profile loads & apiKey is set
-      setTimeout(() => {
-        const key = localStorage.getItem("odyssey_api_key");
-        if (key) startGuidedSession();
-      }, 200);
-    }
+      if (!key) { setError("请先在设置中连接 DeepSeek"); return; }
+      setGuideLoading(true);
+      try {
+        const { reply, summary } = await chatWithAI("请以我内心另一个自己的身份，温和地问我一个能从今天的具体经历开始回答的问题。", key);
+        if (!cancelled) { setGuideMessages([{ role: "assistant", content: reply }]); setSummary(summary); }
+      } catch {
+        if (!cancelled) setError("连接失败，可以先写下此刻的想法。");
+      } finally {
+        if (!cancelled) setGuideLoading(false);
+      }
+    }, 0);
     const targetDay = parseInt(params.get("day") || "");
     if (!isNaN(targetDay) && targetDay >= 1) setDayOverride(targetDay);
     getProfile().then((p) => {
       if (!p) router.push("/");
       else setBirthdate(p.birthdate);
     }).catch(() => router.push("/"));
+    return () => { cancelled = true; clearTimeout(start); };
   }, [router]);
 
-  async function handleSave() {
-    if (!content.trim()) return;
+  async function saveRecord(text: string, messages: typeof chatMessages = []) {
+    if (!text.trim() || !birthdate || saveLock.current) return;
+    saveLock.current = true;
+    setSaving(true);
+    setError("");
     try {
-      await createEntry(content, [], birthdate, dayOverride);
-      toast("已保存", "success");
-      setSaved(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "保存失败");
+      const entry = messages.length
+        ? await createEntryWithAI(text, [], birthdate, "", summary, undefined, dayOverride, messages)
+        : await createEntry(text, [], birthdate, dayOverride);
+      if ("messagesSaved" in entry && !entry.messagesSaved) {
+        toast("日记正文已保存，对话附件保存失败", "error");
+      } else {
+        toast("记录已保存", "success");
+      }
+      router.replace(`/journal/${entry.id}`);
+    } catch {
+      setError("保存失败，文字还在这里，可以再试一次。");
+      saveLock.current = false;
+      setSaving(false);
     }
   }
 
   async function handleChat() {
     if (!content.trim()) return;
-    if (!apiKey) { setError("请先在首页设置连接密钥"); return; }
+    if (!apiKey) { setError("请先在设置中连接 DeepSeek"); return; }
     setLoading(true);
     setError("");
     try {
       const { reply, summary } = await chatWithAI(content, apiKey);
+      setSummary(summary);
       setChatMessages([{ role: "assistant", content: reply }]);
-      setLastSavedContent(content);
       setChatting(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "连接失败");
@@ -100,6 +122,7 @@ export default function NewJournal() {
       });
       if (!res.ok) throw new Error("连接失败");
       const data = await res.json();
+      setSummary(data.summary ?? "");
       setChatMessages([...updated, { role: "assistant", content: data.reply }]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "连接失败");
@@ -108,51 +131,8 @@ export default function NewJournal() {
     }
   }
 
-  async function finishChat() {
-    const userMsgs = chatMessages.filter((m) => m.role === "user");
-    if (userMsgs.length === 0) {
-      toast("那就下次再聊吧~", "info");
-      setSaved(true);
-      return;
-    }
-    try {
-      const fullContent = [content, ...userMsgs.map((m) => m.content)].join("\n\n");
-      const lastAi = [...chatMessages].reverse().find((m) => m.role === "assistant")?.content ?? "";
-      const summaryMatch = lastAi.match(/【摘要[：:]\s*(.+?)】/);
-      const summary = summaryMatch ? summaryMatch[1] : fullContent.slice(0, 40);
-      await createEntryWithAI(fullContent, [], birthdate, chatMessages.filter((m) => m.role === "assistant").map((m) => m.content).join("\n---\n"), summary, undefined, dayOverride);
-      toast("已保存", "success");
-      setSaved(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "保存失败");
-    }
-  }
-
-  function getKey() { return localStorage.getItem("odyssey_api_key") || apiKey; }
-
-  async function startGuidedSession() {
-    const key = getKey();
-    if (!key) { setError("请先在设置里填写 DeepSeek 密钥"); return; }
-    setGuideLoading(true);
-    try {
-      const ctx = lastSavedContent ? lastSavedContent.slice(0, 600) : "";
-      const prompt = ctx
-        ? `我刚才记录了这样一段想法：「${ctx}」。请以我内心深处另一个自己的身份，基于我刚才的这段记录，向我提出一个开放性的追问，引导我继续深挖。不要泛泛而谈，要具体针对我刚才说的内容。语气温柔、好奇、不带评判。`
-        : "请以我内心深处另一个自己的身份，向我提出一个开放性的问题。要温柔、好奇、不带评判，引导我探索此刻的内心。";
-      const { reply } = await chatWithAI(prompt, key);
-      const msgs: { role: string; content: string }[] = [];
-      if (ctx) msgs.push({ role: "user", content: ctx });
-      msgs.push({ role: "assistant", content: reply });
-      setGuideMessages(msgs);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "连接失败");
-    } finally {
-      setGuideLoading(false);
-    }
-  }
-
   async function sendGuideMessage() {
-    const key = getKey();
+    const key = apiKey;
     if (!guideInput.trim() || !key) return;
     const userMsg = guideInput.trim();
     setGuideInput("");
@@ -161,9 +141,9 @@ export default function NewJournal() {
     setGuideLoading(true);
 
     try {
-      const ctx = lastSavedContent ? `最初的记录：「${lastSavedContent.slice(0, 600)}」\n\n` : "";
-      const prompt = `${ctx}之前的对话：\n${updated.map((m) => (m.role === "assistant" ? "内心：" : "我：") + m.content).join("\n")}\n\n请继续以我内心另一个自己的身份回应我。可以先简短回应，然后继续提问引导我深入思考。紧扣最初记录的主题。`;
-      const { reply } = await chatWithAI(prompt, key);
+      const prompt = `之前的对话：\n${updated.map((m) => (m.role === "assistant" ? "内心：" : "我：") + m.content).join("\n")}\n\n请继续以我内心另一个自己的身份回应我。可以先简短回应，然后继续提问引导我深入思考。紧扣最初记录的主题。`;
+      const { reply, summary } = await chatWithAI(prompt, key);
+      setSummary(summary);
       setGuideMessages([...updated, { role: "assistant", content: reply }]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "连接失败");
@@ -172,77 +152,18 @@ export default function NewJournal() {
     }
   }
 
-  async function saveGuidedSession() {
-    const userMessages = guideMessages.filter((m) => m.role === "user");
-    const aiMessages = guideMessages.filter((m) => m.role === "assistant");
-
-    // Don't save if user hasn't replied (only the auto-added initial content exists)
-    const actualReplies = userMessages.filter((m) => m.content !== lastSavedContent);
-    if (actualReplies.length === 0) {
-      toast("那就下次再聊吧~", "info");
-      setSaved(true);
-      return;
-    }
-
-    try {
-      const fullContent = actualReplies.map((m) => m.content).join("\n\n");
-      const lastAiReply = [...aiMessages].reverse()[0]?.content ?? "";
-      const summaryMatch = lastAiReply.match(/【摘要[：:]\s*(.+?)】/);
-      const summary = summaryMatch ? summaryMatch[1] : fullContent.slice(0, 40);
-
-      await createEntryWithAI(
-        fullContent,
-        [],
-        birthdate,
-        aiMessages.map((m) => m.content).join("\n---\n"),
-        summary,
-        undefined,
-        dayOverride
-      );
-      toast("已保存", "success");
-      setSaved(true);
-    } catch (e) {
-      toast("保存失败", "error");
-    }
-  }
-
-  if (saved) {
-    return (
-      <main className="flex-1 flex flex-col items-center justify-center p-6 pb-24">
-        <GlassCard className="text-center p-8">
-          <p className="text-4xl mb-4">✓</p>
-          <h2 className="text-xl font-semibold mb-2 text-slate-800">已保存</h2>
-          <p className="text-slate-500 mb-6">你的想法已经被记录下来了</p>
-          <div className="flex flex-col gap-3">
-            {apiKey && (
-              <Button onClick={() => {
-                setLastSavedContent(content);
-                setSaved(false); setChatting(false); setError("");
-                setMode("guided"); setContent(""); startGuidedSession();
-              }} className="py-3 px-8 bg-indigo-500">
-                深入对话
-              </Button>
-            )}
-            <Button variant="secondary" onClick={() => {
-              setContent(""); setChatMessages([]); setChatInput("");
-              setSaved(false); setChatting(false); setError("");
-              setMode("normal");
-            }} className="py-3 px-8">再写一条</Button>
-            <Button variant="ghost" onClick={() => router.push("/timeline")} className="py-3 px-8">
-              回到时间轴
-            </Button>
-            <Button variant="ghost" onClick={() => router.push("/dashboard")} className="py-3 px-8">
-              回到主页
-            </Button>
-          </div>
-        </GlassCard>
-      </main>
-    );
+  function saveConversation(guided: boolean) {
+    const messages = guided ? guideMessages : chatMessages;
+    const draft = guided ? guideInput : chatInput;
+    const replies = messages.filter((m) => m.role === "user").map((m) => m.content);
+    const text = [guided ? "" : content, ...replies, draft.trim()].filter(Boolean).join("\n\n");
+    const transcript = draft.trim() ? [...messages, { role: "user", content: draft.trim() }] : messages;
+    return saveRecord(text, transcript);
   }
 
   return (
     <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
-      <PageHeader title={mode === "guided" ? "深入对话" : "此刻"} />
+      <PageHeader title={mode === "guided" ? "深入对话" : "写日记"} />
       {dayOverride && (
         <p className="text-xs text-slate-400 text-center -mt-2 mb-3">
           记录在第 {dayOverride} 天
@@ -259,8 +180,8 @@ export default function NewJournal() {
               ) : (
                 <>
                   <p className="text-slate-300 text-sm">无法连接</p>
-                  {error && <p className="text-red-400 text-xs">{error}</p>}
-                  <button onClick={() => setMode("normal")} className="text-xs text-indigo-400 hover:text-indigo-600 cursor-pointer">返回</button>
+
+                  <button onClick={() => { setMode("normal"); setError(""); }} className="text-xs text-indigo-400 hover:text-indigo-600 cursor-pointer">返回</button>
                 </>
               )}
             </div>
@@ -294,17 +215,19 @@ export default function NewJournal() {
               <div className="flex gap-2">
                 <Textarea
                   glass
+                  readOnly={saving}
+                  aria-label="对话回应"
                   value={guideInput}
                   onChange={(e) => setGuideInput(e.target.value)}
                   placeholder="回应..."
                   className="flex-1 min-h-[60px]"
                 />
                 <div className="flex flex-col gap-2">
-                  <Button onClick={sendGuideMessage} disabled={guideLoading || !guideInput.trim()}>
+                  <Button onClick={sendGuideMessage} disabled={saving || guideLoading || !guideInput.trim()}>
                     发送
                   </Button>
-                  <Button variant="secondary" onClick={saveGuidedSession} disabled={guideMessages.length === 0}>
-                    下次再聊吧
+                  <Button variant="secondary" onClick={() => saveConversation(true)} disabled={saving || guideLoading || !birthdate || (!guideInput.trim() && !guideMessages.some((m) => m.role === "user"))}>
+                    {saving ? "保存中…" : "保存对话"}
                   </Button>
                 </div>
               </div>
@@ -316,25 +239,21 @@ export default function NewJournal() {
       {/* Step 1: Write */}
       {mode !== "guided" && !chatting && (
         <div className="flex-1 flex flex-col">
-          <Textarea
-            glass
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="此刻，你在想什么？"
-            className="flex-1 min-h-[180px] w-full"
-            autoFocus
-          />
-          {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+          <div className="writing-paper">
+            <div className="paper-meta"><span>{dayOverride ? `第 ${dayOverride} 天` : "今日记录"}</span><span>{Array.from(content.trim()).length} 字</span></div>
+            <textarea aria-label="日记正文" value={content} readOnly={saving || loading}
+              onChange={(e) => setContent(e.target.value)} placeholder="今天，哪件小事还留在你心里？" />
+          </div>
           <div className="flex gap-3 mt-4">
-            <Button onClick={handleSave} disabled={!content.trim()} className="flex-1">
-              记录
+            <Button onClick={() => saveRecord(content)} disabled={saving || loading || !content.trim() || !birthdate} className="flex-1">
+              {saving ? "保存中…" : "保存记录"}
             </Button>
-            <Button variant="secondary" onClick={handleChat} disabled={loading || !content.trim()}>
+            {apiKey && <Button variant="secondary" onClick={handleChat} disabled={saving || loading || !content.trim()}>
               {loading ? "思考中..." : "深入聊聊"}
-            </Button>
+            </Button>}
           </div>
           <Link href="/dashboard" className="text-center text-xs text-slate-300 hover:text-slate-400 mt-6 py-2">
-            暂时没什么想说的
+            返回今天
           </Link>
         </div>
       )}
@@ -375,22 +294,25 @@ export default function NewJournal() {
           <div className="flex gap-2">
             <Textarea
               glass
+              readOnly={saving}
+              aria-label="对话回应"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              placeholder="可以使用豆包输入法语音聊天哦"
+              placeholder="继续写下你的回应…"
               className="flex-1 min-h-[56px]"
             />
             <div className="flex flex-col gap-2">
-              <Button onClick={continueChat} disabled={loading || !chatInput.trim()}>
+              <Button onClick={continueChat} disabled={saving || loading || !chatInput.trim()}>
                 发送
               </Button>
-              <Button variant="secondary" onClick={finishChat} disabled={loading}>
-                今天就聊到这里吧
+              <Button variant="secondary" onClick={() => saveConversation(false)} disabled={saving || loading || !birthdate}>
+                {saving ? "保存中…" : "保存记录"}
               </Button>
             </div>
           </div>
         </div>
       )}
+      {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
     </main>
   );
 }

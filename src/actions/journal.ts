@@ -40,7 +40,8 @@ export async function createEntryWithAI(
   aiReply: string,
   summary: string,
   userReply?: string,
-  dayNumberOverride?: number
+  dayNumberOverride?: number,
+  transcript?: { role: string; content: string }[]
 ) {
   const userId = await getUserId();
   const dayNumber = dayNumberOverride ?? await daysAlive(birthdate);
@@ -59,19 +60,19 @@ export async function createEntryWithAI(
 
   if (error) throw new Error(error.message);
 
-  const messages: { entry_id: string; sequence: number; role: string; content: string }[] = [
-    { entry_id: (entry as any).id, sequence: 1, role: "assistant", content: aiReply },
+  const id = (entry as { id: string }).id;
+  const conversation = transcript ?? [
+    { role: "assistant", content: aiReply },
+    ...(userReply ? [{ role: "user", content: userReply }] : []),
   ];
-  if (userReply) {
-    messages.push({ entry_id: (entry as any).id, sequence: 2, role: "user", content: userReply });
-  }
-  if (messages.length > 0) {
-    await supabase.from("ai_messages").insert(messages);
-  }
+  const messages = conversation.map((message, index) => ({
+    entry_id: id, sequence: index + 1, role: message.role, content: message.content,
+  }));
+  const { error: messageError } = await supabase.from("ai_messages").insert(messages);
 
   revalidatePath("/dashboard");
   revalidatePath("/timeline");
-  return entry as { id: string };
+  return { id, messagesSaved: !messageError };
 }
 
 export async function addAIMessage(entryId: string, role: string, content: string, sequence: number) {

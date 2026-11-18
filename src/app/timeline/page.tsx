@@ -148,7 +148,7 @@ export default function Timeline() {
     <main className="flex-1 flex flex-col max-w-lg mx-auto w-full min-h-screen pb-24">
       {/* Header */}
       <div className="flex items-center justify-center px-6 pt-6 pb-2 flex-shrink-0">
-        <h1 className="font-medium text-slate-500 text-sm">时间轴</h1>
+        <h1 className="journal-title">时间轴</h1>
       </div>
 
       {/* Day counter */}
@@ -170,15 +170,16 @@ export default function Timeline() {
           }}
           className="mt-2 flex items-center justify-center gap-1"
         >
-          <span className="text-xs text-slate-300">跳转到第</span>
+          <label htmlFor="jumpDay" className="text-xs text-slate-500">跳转到第</label>
           <input
-            name="jumpDay"
+            id="jumpDay" name="jumpDay"
             type="number"
             min={1}
             placeholder={`${totalDays}`}
             className="w-16 text-center text-xs px-2 py-1 rounded-lg border border-slate-200 bg-white/50 focus:outline-none focus:border-indigo-300"
           />
-          <span className="text-xs text-slate-300">天</span>
+          <span className="text-xs text-slate-500">天</span>
+          <button type="submit" className="text-xs px-3 py-2 text-indigo-500">前往</button>
           <button
             type="button"
             onClick={() => jumpToDay(totalDays)}

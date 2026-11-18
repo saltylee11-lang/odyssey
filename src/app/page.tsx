@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useRef, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/auth/client";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import Image from "next/image";
+
 
 export default function Home() {
   const router = useRouter();
+  const dialog = useRef<HTMLDialogElement>(null);
   const supabase = createClient();
 
-  const [mounted, setMounted] = useState(false);
+  const [notice, setNotice] = useState("");
   const [mode, setMode] = useState<"login" | "register">("login");
 
   // Login fields
@@ -28,9 +29,9 @@ export default function Home() {
   const [hasLocalData, setHasLocalData] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) router.push("/dashboard");
+      if (user) router.replace("/dashboard");
     });
     // Check for local data to migrate
     if (typeof window !== "undefined") {
@@ -38,9 +39,9 @@ export default function Home() {
       const localEntries = localStorage.getItem("odyssey_entries");
       if (localUser && localEntries) setHasLocalData(true);
     }
-  }, [router]);
+  }, [router, supabase]);
 
-  if (!mounted) return null;
+
 
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
@@ -62,11 +63,7 @@ export default function Home() {
     }
 
     await migrateIfNeeded();
-    // Short delay to ensure cookie is flushed
-    setLoading(false);
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 500);
+    window.location.replace("/dashboard");
   }
 
   async function handleRegister(e: FormEvent) {
@@ -102,17 +99,15 @@ export default function Home() {
 
     // If email confirmation is required, show message instead of redirecting
     if (!signUpData.session) {
-      setError("请查收确认邮件，点击链接后即可登录");
+      setEmail(regEmail);
+      setNotice("确认邮件已发出。打开邮件完成确认后，用这个邮箱登录。");
       setMode("login");
       setLoading(false);
       return;
     }
 
     await migrateIfNeeded();
-    setLoading(false);
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 500);
+    window.location.replace("/dashboard");
   }
 
   async function migrateIfNeeded() {
@@ -132,147 +127,50 @@ export default function Home() {
     }
   }
 
+  const registering = mode === "register";
+  const today = new Date();
+  const latestBirthday = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
+
   return (
-    <main className="flex-1 relative overflow-hidden">
-      {/* Cover image background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url(/cover.jpg)" }}
-      />
-      {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 bg-black/30" />
-
-      {/* Auth card */}
-      <div className="absolute inset-0 flex items-center justify-center p-6">
-        <div
-          className="w-full max-w-xs rounded-2xl px-6 py-8"
-          style={{
-            background: "rgba(255,255,255,0.05)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 20px 50px rgba(0,0,0,0.35)",
-          }}
-        >
-          <h1
-            className="text-3xl font-bold text-white text-center mb-1"
-            style={{ letterSpacing: "0.3em" }}
-          >
-            奥德赛
-          </h1>
-          <p className="text-amber-200/35 text-sm text-center mb-6 font-light">
-            寻找归途
-          </p>
-
-          {hasLocalData && (
-            <p className="text-amber-200/50 text-xs text-center mb-4">
-              检测到本地数据，登录后将自动导入
-            </p>
-          )}
-
-          {mode === "login" ? (
-            <form onSubmit={handleLogin} className="flex flex-col gap-3">
-              <Input
-                type="email"
-                placeholder="邮箱"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
-                required
-              />
-              <Input
-                type="password"
-                placeholder="密码"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
-                required
-              />
-              {error && <p className="text-red-400 text-xs text-center">{error}</p>}
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-lg text-white py-2.5 text-sm font-medium"
-                style={{
-                  background: "rgba(255,255,255,0.1)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                }}
-              >
-                {loading ? "..." : "登录"}
-              </Button>
-              <button
-                type="button"
-                onClick={() => { setMode("register"); setError(""); }}
-                className="text-white/40 text-sm text-center hover:text-white/60 transition-colors cursor-pointer"
-              >
-                没有账号？注册
-              </button>
+    <main className="night-sea">
+      <Image src="/moonlit-sea.webp" alt="海天交界处，一叶小舟停在月光的倒影旁。" fill sizes="100vw" preload unoptimized className="sea-image" />
+      <header className="sea-masthead"><span>奥德赛</span><span className="masthead-separator" /><span>个人反思日记</span></header>
+      <section className="sea-entry">
+        <div><h1 lang="en">Odyssey</h1><p>在这里，和自己待一会儿。</p></div>
+        <button className="open-journal" onClick={() => dialog.current?.showModal()}>打开日记本 <span aria-hidden="true">↗</span></button>
+      </section>
+      <dialog ref={dialog} className="auth-dialog" aria-labelledby="auth-title">
+        <button className="dialog-close" type="button" aria-label="关闭登录窗口" onClick={() => dialog.current?.close()}>×</button>
+        <section className="auth-panel">
+          <div className="auth-form-wrap">
+            <h2 id="auth-title">{registering ? "写下第一页" : "翻开你的日记"}</h2>
+            <p className="auth-intro">{registering ? "从今天起，把你的所思所想留在这里。" : "记下此刻的想法，也可以和 AI 再聊深一点。"}</p>
+            <div className="auth-switch" aria-label="账户操作">
+              {(["login", "register"] as const).map((tab) => (
+                <button key={tab} type="button" disabled={loading} aria-pressed={mode === tab} onClick={() => {
+                  setMode(tab); setError(""); setNotice("");
+                }}>{tab === "login" ? "登录" : "注册"}</button>
+              ))}
+            </div>
+            {hasLocalData && <p className="form-note">发现旧版的本地记录，登录后将导入。</p>}
+            {notice && <p className="form-note" role="status">{notice}</p>}
+            <form key={mode} onSubmit={async (event) => {
+              try { await (registering ? handleRegister(event) : handleLogin(event)); }
+              catch { setError("连接失败，请稍后再试。"); setLoading(false); }
+            }}>
+              {registering && <label>怎么称呼你<input autoComplete="nickname" value={name} onChange={(e) => setName(e.target.value)} required /></label>}
+              <label>邮箱<input type="email" autoComplete="email" placeholder="you@example.com" value={registering ? regEmail : email}
+                onChange={(e) => (registering ? setRegEmail : setEmail)(e.target.value)} required /></label>
+              <label>密码<input type="password" autoComplete={registering ? "new-password" : "current-password"} placeholder={registering ? "至少 6 位" : "输入你的密码"} minLength={registering ? 6 : undefined}
+                value={registering ? regPassword : password} onChange={(e) => (registering ? setRegPassword : setPassword)(e.target.value)} required /></label>
+              {registering && <label>出生日期<input type="date" autoComplete="bday" max={latestBirthday} value={birthdate}
+                onChange={(e) => setBirthdate(e.target.value)} required /><small>用来计算今天是你人生中的第几天。</small></label>}
+              {error && <p className="form-error" role="alert">{error === "Invalid login credentials" ? "邮箱或密码不正确，请再试一次。" : error}</p>}
+              <button type="submit" disabled={loading} className="ink-button">{loading ? "连接中…" : registering ? "创建日记本" : "登录日记本"}<span aria-hidden="true">→</span></button>
             </form>
-          ) : (
-            <form onSubmit={handleRegister} className="flex flex-col gap-3">
-              <Input
-                type="text"
-                placeholder="你的名字"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
-                required
-              />
-              <Input
-                type="email"
-                placeholder="邮箱"
-                value={regEmail}
-                onChange={(e) => setRegEmail(e.target.value)}
-                className="w-full rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
-                required
-              />
-              <Input
-                type="password"
-                placeholder="密码"
-                value={regPassword}
-                onChange={(e) => setRegPassword(e.target.value)}
-                className="w-full rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
-                required
-              />
-              <Input
-                type="date"
-                value={birthdate}
-                onChange={(e) => setBirthdate(e.target.value)}
-                className="w-full rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20 [&::-webkit-calendar-picker-indicator]:invert"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", colorScheme: "dark" }}
-                required
-              />
-              <p className="text-white/25 text-xs text-center">
-                用来计算你在世上的每一天
-              </p>
-              {error && <p className="text-red-400 text-xs text-center">{error}</p>}
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-lg text-white py-2.5 text-sm font-medium"
-                style={{
-                  background: "rgba(255,255,255,0.1)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                }}
-              >
-                {loading ? "..." : "开始旅程"}
-              </Button>
-              <button
-                type="button"
-                onClick={() => { setMode("login"); setError(""); }}
-                className="text-white/40 text-sm text-center hover:text-white/60 transition-colors cursor-pointer"
-              >
-                已有账号？登录
-              </button>
-            </form>
-          )}
-        </div>
-      </div>
+          </div>
+        </section>
+      </dialog>
     </main>
   );
 }
