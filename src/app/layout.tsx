@@ -29,6 +29,11 @@ function PWARegister() {
     <script
       dangerouslySetInnerHTML={{
         __html: `
+          // Netlify inserts a newline after the charset tag. React expects no text node there.
+          const afterCharset = document.head.querySelector('meta[charset]')?.nextSibling;
+          if (afterCharset?.nodeType === Node.TEXT_NODE && !afterCharset.textContent.trim()) {
+            afterCharset.remove();
+          }
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
               navigator.serviceWorker.register('/sw.js');
