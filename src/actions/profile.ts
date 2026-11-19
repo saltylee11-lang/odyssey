@@ -1,6 +1,6 @@
 "use server";
 
-import { getSupabaseServer } from "@/lib/db";
+import { getReader, getSupabaseServer } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 import { isAvatar } from "@/lib/avatar";
@@ -13,8 +13,7 @@ async function getUserId() {
 }
 
 export async function getProfile() {
-  const supabase = await getSupabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { db: supabase, user } = await getReader();
   if (!user) return null;
 
   const { data, error } = await supabase

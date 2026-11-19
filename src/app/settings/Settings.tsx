@@ -3,7 +3,7 @@
 import { useRef, useState, useSyncExternalStore, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { getProfile, saveAvatar, updateProfile } from '@/actions/profile';
-import { getAllEntries } from '@/actions/journal';
+import { getAllEntries, refreshAfterImport } from '@/actions/journal';
 import { createClient } from '@/lib/auth/client';
 import { prepareAvatar } from '@/lib/avatar';
 import { Avatar } from '@/components/ui/Avatar';
@@ -38,8 +38,10 @@ export function Settings({ profile, entryCount, version }: { profile: Profile; e
     if (!file) return;
     void run('import', async () => {
       setDataNote('正在核对文件…');
+      let attempted = false;
       try {
         const data = JSON.parse(await file.text());
+        attempted = true;
         let added: number;
         if (data?.format === 'ibetter-presence-v1') {
           const { importPresence } = await import('@/lib/import-presence');
@@ -49,8 +51,8 @@ export function Settings({ profile, entryCount, version }: { profile: Profile; e
           added = await restoreJournal(db, data, profile);
         }
         setDataNote(`导入完成，新增 ${added} 篇日记。`);
-        router.refresh();
       } catch (error) { setDataNote(error instanceof SyntaxError ? '文件无法读取，请选择 JSON 备份。' : error instanceof Error ? error.message : '导入失败。'); }
+      finally { if (attempted) await refreshAfterImport().catch(() => router.refresh()); }
     });
   }
   async function exportFile() {

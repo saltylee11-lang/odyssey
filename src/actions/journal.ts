@@ -1,6 +1,6 @@
 "use server";
 
-import { getSupabaseServer } from "@/lib/db";
+import { getReader, getSupabaseServer } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { daysAlive } from "./profile";
 
@@ -109,16 +109,27 @@ export async function updateEntrySummary(entryId: string, summary: string) {
     .eq("user_id", userId);
 
   if (error) throw new Error(error.message);
+  revalidatePath("/timeline");
+  revalidatePath("/dashboard");
   revalidatePath(`/journal/${entryId}`);
 }
 
+// Imports write directly through the signed-in browser's Supabase client.
+export async function refreshAfterImport() {
+  await getUserId();
+  revalidatePath("/dashboard");
+  revalidatePath("/timeline");
+  revalidatePath("/search");
+  revalidatePath("/settings");
+}
+
 export async function getEntries(limit = 20, offset = 0) {
-  const userId = await getUserId();
-  const supabase = await getSupabaseServer();
-  const { data, error } = await supabase
+  const { db, user } = await getReader();
+  if (!user) throw new Error("未登录");
+  const { data, error } = await db
     .from("journal_entries")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 

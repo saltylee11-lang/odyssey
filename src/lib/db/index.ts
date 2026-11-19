@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -17,3 +18,10 @@ export async function getSupabaseServer() {
     }
   );
 }
+
+// React shares this only within the current server render.
+export const getReader = cache(async () => {
+  const db = await getSupabaseServer();
+  const { data: { user } } = await db.auth.getUser();
+  return { db, user };
+});
