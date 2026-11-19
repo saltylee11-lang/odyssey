@@ -7,6 +7,8 @@ import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useLocalDay } from "@/hooks/useLocalDay";
 import { useTimelineRecords, type TimelineScope } from "./useTimelineRecords";
+import { CalendarNotes } from "@/components/CalendarNotes";
+import { notesForDate } from "@/lib/calendar/annotations";
 import { Skeleton } from "@/components/ui/Skeleton";
 import styles from "./timeline.module.css";
 
@@ -29,12 +31,19 @@ function dayAtOffset(offset: number, lastDay: number) {
   return Math.min(lastDay, Math.max(1, Math.round(offset / DAY_SPACING) + 1));
 }
 
+function milestone(day: number) {
+  if (day % 1000 === 0) return "thousand";
+  if (day % 100 === 0) return "hundred";
+}
+
 function Timeline({ scope, birthdate, today, lastDay, initialDay }: {
   scope: TimelineScope; birthdate: Date; today: number; lastDay: number; initialDay: number;
 }) {
   const [day, setDay] = useState(initialDay);
   const ruler = useRef<HTMLDivElement>(null);
-  const dateLabel = format(addDays(birthdate, day - 1), "yyyy年M月d日 EEEE", { locale: zhCN });
+  const date = addDays(birthdate, day - 1);
+  const notes = notesForDate(date, birthdate);
+  const dateLabel = format(date, "yyyy年M月d日 EEEE", { locale: zhCN });
   const distance = (lastDay - 1) * DAY_SPACING;
   const firstVisible = Math.max(1, day - BUFFER_DAYS);
   const lastVisible = Math.min(lastDay, day + BUFFER_DAYS);
@@ -90,8 +99,9 @@ function Timeline({ scope, birthdate, today, lastDay, initialDay }: {
   return (
     <>
       <div className={styles.selection}>
-        <p className={styles.day}>{day}</p>
+        <p className={styles.day} data-milestone={milestone(day)}>{day}</p>
         <p className={styles.date}>{dateLabel}</p>
+        <div className={styles.notes}><CalendarNotes notes={notes} /></div>
         <form className={styles.jump} onSubmit={event => {
           event.preventDefault();
           const input = event.currentTarget.elements.namedItem("jumpDay") as HTMLInputElement;
@@ -110,7 +120,7 @@ function Timeline({ scope, birthdate, today, lastDay, initialDay }: {
       <div className={styles.ruler}>
         <div className={styles.indicator} aria-hidden="true" />
         <div ref={ruler} className={styles.scroller} role="slider" tabIndex={0}
-          aria-label="按天浏览日记" aria-valuemin={1} aria-valuemax={lastDay} aria-valuenow={day} aria-valuetext={dateLabel}
+          aria-label="按天浏览日记" aria-valuemin={1} aria-valuemax={lastDay} aria-valuenow={day} aria-valuetext={[dateLabel, ...notes.map(note => note.label)].join("，")}
           onKeyDown={event => {
             const targets: Record<string, number> = {
               ArrowLeft: day - 1, ArrowRight: day + 1, ArrowDown: day - 1, ArrowUp: day + 1,
@@ -129,7 +139,9 @@ function Timeline({ scope, birthdate, today, lastDay, initialDay }: {
             <div className={styles.scale} style={{ width: distance }}>
               {Array.from({ length: lastVisible - firstVisible + 1 }, (_, index) => {
                 const tick = firstVisible + index;
-                return <div key={tick} data-day={tick} className={styles.tick} aria-hidden="true"
+                const tickNotes = tick === day ? notes : notesForDate(addDays(birthdate, tick - 1), birthdate);
+                return <div key={tick} data-milestone={milestone(tick)} data-calendar={tickNotes[0]?.kind}
+                  title={tickNotes.length ? tickNotes.map(note => note.label).join(" · ") : undefined} data-day={tick} className={styles.tick} aria-hidden="true"
                   data-entry={markers.data?.days.has(tick) || (tick === day && !!selectedEntries?.length)} data-selected={day === tick} data-today={today === tick}
                   style={{ left: (tick - 1) * DAY_SPACING }}>
                   <i />

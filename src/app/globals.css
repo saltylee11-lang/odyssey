@@ -238,3 +238,11 @@ main.max-w-lg { max-width: 740px; padding-top: 36px; }
 .dialogue[data-role=assistant] { background: #eaf0e9; border-inline-start: 3px solid #608380; }
 .detail-heading { margin-bottom: 16px; }
 @media (max-width: 380px) { .today-cover { grid-template-columns: minmax(0, 1.7fr) minmax(0, .8fr); } }
+
+.calendar-notes { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px 8px; }
+.calendar-notes span { font-size: 13px; line-height: 1.6; padding: 1px 8px; border-radius: 4px; overflow-wrap: anywhere; }
+.calendar-notes [data-kind=birthday] { color: #76510f; background: #f3e7c9; font-weight: 600; }
+.calendar-notes [data-kind=term] { color: #305e56; background: #e5eee5; }
+.calendar-notes [data-kind=festival], .calendar-notes [data-kind=off] { color: #69532c; background: #f1ecdc; }
+.calendar-notes [data-kind=work] { color: #81452f; background: #f4e7df; }
+.today-text .calendar-notes { justify-content: flex-start; margin: -10px 0 18px; }

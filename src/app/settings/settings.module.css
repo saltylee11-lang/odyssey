@@ -16,6 +16,9 @@
 .links button, .footer button { text-decoration: underline; text-decoration-color: #b4c3bc; text-underline-offset: 4px; }
 .links button:hover, .footer button:hover { text-decoration-color: currentColor; }
 .inline { margin-top: 12px; }
+.panel > .secondary { min-height: 42px; font-size: 14px; }
+.shareLink { display: block; margin-top: 10px; color: var(--muted); font-size: 14px; }
+.shareLink .inline { margin-top: 5px; }
 .nameForm { margin-top: 18px; }
 .nameForm label, .facts dt { color: var(--muted); font-size: 13px; }
 .nameForm .inline { margin-top: 6px; }

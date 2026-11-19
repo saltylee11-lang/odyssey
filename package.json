@@ -1,6 +1,6 @@
 {
   "name": "odyssey",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -26,6 +26,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "lunar-javascript": "1.7.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

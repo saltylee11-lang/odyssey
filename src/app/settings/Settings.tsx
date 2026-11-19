@@ -8,6 +8,7 @@ import { createClient } from '@/lib/auth/client';
 import { prepareAvatar } from '@/lib/avatar';
 import { Avatar } from '@/components/ui/Avatar';
 import { useToast } from '@/components/ui/Toast';
+import { Recommend } from './Recommend';
 import styles from './settings.module.css';
 
 type Profile = NonNullable<Awaited<ReturnType<typeof getProfile>>>;
@@ -94,6 +95,7 @@ export function Settings({ profile, entryCount, version }: { profile: Profile; e
       <input ref={backupFile} hidden type="file" aria-label="选择日记备份" accept=".json,application/json" onChange={importFile} />
       <p role="status">{dataNote}</p>
     </div></section>
+    <Recommend />
     <footer className={styles.footer}><span>奥德赛 · v{version}</span><button disabled={!!busy} onClick={() => run('logout', async () => {
       const { error } = await db.auth.signOut({ scope: 'local' });
       if (error) throw Error('退出失败，请重试。');

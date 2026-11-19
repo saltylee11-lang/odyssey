@@ -37,3 +37,12 @@
   .ruler { margin-top: 16px; }
   .entries { margin-top: 10px; }
 }
+
+.day[data-milestone], .tick[data-milestone] span { color: #87651f; }
+.day[data-milestone=thousand], .tick[data-milestone=thousand] span { color: #795414; font-weight: 650; }
+.notes { min-height: 30px; display: grid; align-items: center; margin-top: 3px; }
+.selection .jump { margin-top: 6px; }
+.tick[data-calendar]::before { content: ""; position: absolute; bottom: 34px; left: -2px; width: 4px; height: 4px; border-radius: 50%; background: #ae985e; }
+.tick[data-calendar=term]::before { background: #60877b; }
+.tick[data-calendar=work]::before { background: #ae7156; }
+.tick[data-calendar=birthday]::before { background: #9a7429; width: 6px; height: 6px; left: -3px; }

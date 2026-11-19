@@ -30,7 +30,7 @@ function Dashboard({ profile, entries }: {
       <section className="today-cover">
         <div className="today-text">
           <p className="day-label">今天，是你在世上的</p>
-          <h2>第 {profile ? <DayNumber birthdate={profile.birthdate} /> : <strong>…</strong>} 天</h2>
+          {profile ? <DayNumber birthdate={profile.birthdate} /> : <h2>第 <strong>…</strong> 天</h2>}
           <div className="today-actions">
             <Link className="ink-button" href="/journal/new">写日记 <span aria-hidden="true">↗</span></Link>
             <GuidedLink />
