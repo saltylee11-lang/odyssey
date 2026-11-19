@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -47,6 +47,9 @@ export default function JournalDetail() {
   const [resummarizing, setResummarizing] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [savingSummary, setSavingSummary] = useState(false);
+  const writing = chatLoading || resummarizing || deleting || savingSummary;
+  const writeLock = useRef(false);
 
   const [loadFailure, setLoadFailure] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -66,7 +69,8 @@ export default function JournalDetail() {
   }, [params.id, attempt]);
 
   async function handleContinueChat() {
-    if (!chatInput.trim() || !apiKey || !entry) return;
+    if (!chatInput.trim() || !apiKey || !entry || editingSummary || writeLock.current) return;
+    writeLock.current = true;
     setChatLoading(true);
     try {
       // Build conversation context
@@ -90,12 +94,15 @@ export default function JournalDetail() {
     } catch (e) {
       toast(e instanceof Error ? e.message : "连接失败", "error");
     } finally {
+      writeLock.current = false;
       setChatLoading(false);
     }
   }
 
   async function handleSaveSummary() {
-    if (!entry) return;
+    if (!entry || writeLock.current) return;
+    writeLock.current = true;
+    setSavingSummary(true);
     try {
       await updateEntrySummary(entry.id, editedSummary.trim());
       setEntry({ ...entry, summary: editedSummary.trim() });
@@ -103,11 +110,15 @@ export default function JournalDetail() {
       toast("摘要已保存", "success");
     } catch {
       toast("保存失败", "error");
+    } finally {
+      writeLock.current = false;
+      setSavingSummary(false);
     }
   }
 
   async function handleResummarize() {
-    if (!entry || !apiKey) return;
+    if (!entry || !apiKey || writeLock.current) return;
+    writeLock.current = true;
     setResummarizing(true);
     try {
       const res = await fetch("/api/resummarize", {
@@ -126,12 +137,14 @@ export default function JournalDetail() {
     } catch {
       toast("网络错误", "error");
     } finally {
+      writeLock.current = false;
       setResummarizing(false);
     }
   }
 
   async function handleDelete() {
-    if (!entry) return;
+    if (!entry || writeLock.current) return;
+    writeLock.current = true;
     setDeleting(true);
     try {
       await deleteEntry(entry.id);
@@ -139,6 +152,7 @@ export default function JournalDetail() {
       toast("已删除", "success");
     } catch {
       toast("删除失败", "error");
+      writeLock.current = false;
       setDeleting(false);
       setDeleteConfirm(false);
     }
@@ -198,7 +212,7 @@ export default function JournalDetail() {
         {editingSummary ? (
           <div className="flex flex-col gap-2">
             <Input
-              value={editedSummary}
+              disabled={writing} value={editedSummary}
               onChange={(e) => setEditedSummary(e.target.value)}
               placeholder="输入摘要..."
               className="w-full text-sm"
@@ -209,11 +223,11 @@ export default function JournalDetail() {
               }}
             />
             <div className="flex gap-2">
-              <Button onClick={handleSaveSummary} className="flex-1 py-1.5 text-sm">
+              <Button disabled={writing} onClick={handleSaveSummary} className="flex-1 py-1.5 text-sm">
                 保存
               </Button>
               <Button
-                variant="secondary"
+                variant="secondary" disabled={writing}
                 onClick={() => setEditingSummary(false)}
                 className="flex-1 py-1.5 text-sm"
               >
@@ -224,6 +238,7 @@ export default function JournalDetail() {
         ) : entry.summary ? (
           <div>
             <button
+              disabled={writing}
               onClick={() => { setEditedSummary(entry.summary); setEditingSummary(true); }}
               className="text-sm font-medium text-left hover:text-indigo-500 transition-colors cursor-pointer"
             >
@@ -233,13 +248,14 @@ export default function JournalDetail() {
               {apiKey && (
                 <button
                   onClick={handleResummarize}
-                  disabled={resummarizing}
+                  disabled={writing}
                   className="text-xs text-indigo-400 hover:text-indigo-600 transition-colors cursor-pointer"
                 >
                   {resummarizing ? "生成中..." : "重写摘要"}
                 </button>
               )}
               <button
+                disabled={writing}
                 onClick={() => { setEditedSummary(""); setEditingSummary(true); }}
                 className="text-xs text-slate-300 hover:text-slate-500 transition-colors cursor-pointer"
               >
@@ -250,6 +266,7 @@ export default function JournalDetail() {
         ) : (
           <div>
             <button
+              disabled={writing}
               onClick={() => { setEditedSummary(""); setEditingSummary(true); }}
               className="text-sm text-slate-300 hover:text-indigo-400 transition-colors cursor-pointer"
             >
@@ -258,7 +275,7 @@ export default function JournalDetail() {
             {apiKey && (
               <button
                 onClick={handleResummarize}
-                disabled={resummarizing}
+                disabled={writing}
                 className="ml-3 text-xs text-indigo-400 hover:text-indigo-600 transition-colors cursor-pointer"
               >
                 {resummarizing ? "生成中..." : "AI 生成"}
@@ -279,13 +296,14 @@ export default function JournalDetail() {
         <div className="mb-6 space-y-3">
           <Textarea
             glass
+            readOnly={writing}
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             placeholder="继续对话..."
             className="w-full min-h-[80px]"
           />
           <div className="flex gap-2">
-            <Button onClick={handleContinueChat} disabled={chatLoading || !chatInput.trim()} className="flex-1">
+            <Button onClick={handleContinueChat} disabled={writing || editingSummary || !chatInput.trim()} className="flex-1">
               {chatLoading ? "..." : "发送"}
             </Button>
             <Button variant="secondary" onClick={() => setExpanded(false)}>收起</Button>
@@ -300,7 +318,7 @@ export default function JournalDetail() {
         <div>
           {!deleteConfirm ? (
             <button
-              onClick={() => setDeleteConfirm(true)}
+              disabled={writing} onClick={() => setDeleteConfirm(true)}
               className="text-xs text-slate-300 hover:text-red-400 transition-colors cursor-pointer"
             >
               删除这条记录
@@ -309,7 +327,7 @@ export default function JournalDetail() {
             <div className="flex items-center justify-center gap-2">
               <button
                 onClick={handleDelete}
-                disabled={deleting}
+                disabled={writing}
                 className="text-xs bg-red-500 text-white px-4 py-1.5 rounded-full hover:bg-red-600 transition-colors cursor-pointer"
               >
                 {deleting ? "删除中..." : "确认删除"}
