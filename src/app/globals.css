@@ -226,3 +226,15 @@ main.max-w-lg { max-width: 740px; padding-top: 36px; }
 @media(prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+.profile-avatar { width: 34px; height: 34px; flex: none; display: inline-grid; place-items: center; overflow: hidden; border-radius: 50%; color: #eff2e8; background: #2f5b63; font: 600 17px/1 var(--display); }
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.owner-link { display: inline-flex; align-items: center; gap: 8px; min-width: 0; color: var(--muted); font-size: 13px; }
+.owner-link span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.owner-link:hover { color: var(--ink); }
+.today-heading { align-items: center; }
+.today-heading h1 { flex: none; }
+.journal-prose { font: clamp(17px, 2vw, 20px)/1.85 var(--display); white-space: pre-wrap; overflow-wrap: anywhere; }
+.dialogue { border: 1px solid var(--line); border-radius: 6px; padding: 16px; overflow-wrap: anywhere; background: #fffef9; }
+.dialogue[data-role=assistant] { background: #eaf0e9; border-inline-start: 3px solid #608380; }
+.detail-heading { margin-bottom: 16px; }
+@media (max-width: 380px) { .today-cover { grid-template-columns: minmax(0, 1.7fr) minmax(0, .8fr); } }

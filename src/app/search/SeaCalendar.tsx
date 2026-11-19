@@ -1,5 +1,6 @@
-import { use, useId, useState, useSyncExternalStore } from 'react';
+import { use, useId, useState } from 'react';
 import { addDays, addMonths, differenceInCalendarDays, differenceInCalendarMonths, format, isValid, parseISO } from 'date-fns';
+import { useLocalDay } from '@/hooks/useLocalDay';
 import styles from './atlas.module.css';
 
 const scales = {
@@ -9,21 +10,6 @@ const scales = {
 } as const;
 type Scale = keyof typeof scales;
 const scaleOrder: Scale[] = ['days', 'weeks', 'months'];
-
-function localDay() { return format(new Date(), 'yyyy-MM-dd'); }
-function subscribeDay(update: () => void) {
-  let timer: ReturnType<typeof setTimeout>;
-  function schedule() {
-    clearTimeout(timer);
-    update();
-    const midnight = new Date();
-    midnight.setHours(24, 0, 0, 0);
-    timer = setTimeout(schedule, midnight.getTime() - Date.now() + 50);
-  }
-  schedule();
-  document.addEventListener('visibilitychange', schedule);
-  return () => { clearTimeout(timer); document.removeEventListener('visibilitychange', schedule); };
-}
 
 // One pattern per state keeps even 30,000 individual squares inexpensive to draw.
 function CalendarGrid({ total, columns, elapsed, className }: { total: number; columns: number; elapsed: number; className: string }) {
@@ -47,7 +33,7 @@ function CalendarGrid({ total, columns, elapsed, className }: { total: number; c
 export function SeaCalendar({ birthday }: { birthday: Promise<string | null> }) {
   const date = use(birthday);
   const [scale, setScale] = useState<Scale>('weeks');
-  const day = useSyncExternalStore(subscribeDay, localDay, () => '');
+  const day = useLocalDay();
   const birth = parseISO(date ?? '');
   if (!date || !isValid(birth)) return <p className={styles.note}>暂时读不到出生日期，海历需要用它计算第一格。</p>;
   if (!day) return <p className={styles.note}>正在展开海历…</p>;

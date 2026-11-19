@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { differenceInCalendarDays, parseISO } from "date-fns";
 import Link from "next/link";
 import { createEntry, createEntryWithAI } from "@/actions/journal";
 import { chatWithAI } from "@/lib/ai";
@@ -70,9 +71,10 @@ export default function NewJournal() {
     setSaving(true);
     setError("");
     try {
+      const day = dayOverride ?? differenceInCalendarDays(new Date(), parseISO(birthdate)) + 1;
       const entry = messages.length
-        ? await createEntryWithAI(text, [], birthdate, "", summary, undefined, dayOverride, messages)
-        : await createEntry(text, [], birthdate, dayOverride);
+        ? await createEntryWithAI(text, [], birthdate, "", summary, undefined, day, messages)
+        : await createEntry(text, [], birthdate, day);
       if ("messagesSaved" in entry && !entry.messagesSaved) {
         toast("日记正文已保存，对话附件保存失败", "error");
       } else {
@@ -179,9 +181,9 @@ export default function NewJournal() {
                 <p className="text-slate-400 text-sm">连接中...</p>
               ) : (
                 <>
-                  <p className="text-slate-300 text-sm">无法连接</p>
+                  {!apiKey && <Link className="guided-link" href="/settings#ai">去设置密钥 →</Link>}
 
-                  <button onClick={() => { setMode("normal"); setError(""); }} className="text-xs text-indigo-400 hover:text-indigo-600 cursor-pointer">返回</button>
+                  <button onClick={() => { setMode("normal"); setError(""); }} className="text-xs text-indigo-400 hover:text-indigo-600 cursor-pointer">回到写日记</button>
                 </>
               )}
             </div>
@@ -191,11 +193,7 @@ export default function NewJournal() {
                 {guideMessages.map((msg, i) => (
                   <div
                     key={i}
-                    className={`p-4 rounded-2xl ${
-                      msg.role === "assistant"
-                        ? "bg-indigo-50/70 backdrop-blur-sm border border-indigo-100/40 mr-4"
-                        : "bg-white/60 backdrop-blur-sm border border-white/60 ml-4"
-                    }`}
+                    className="dialogue" data-role={msg.role}
                   >
                     <p className="text-xs text-slate-400 mb-1">
                       {msg.role === "assistant" ? "深处的回声" : "你"}
@@ -263,18 +261,14 @@ export default function NewJournal() {
         <div className="flex-1 flex flex-col">
           <div className="flex-1 overflow-y-auto space-y-3 mb-4">
             <GlassCard className="p-3">
-              <p className="text-xs text-slate-400 mb-1">你说：</p>
+              <p className="text-xs text-slate-400 mb-1">你</p>
               <p className="text-sm whitespace-pre-wrap">{content}</p>
             </GlassCard>
 
             {chatMessages.map((msg, i) => (
               <div
                 key={i}
-                className={`p-3 rounded-2xl ${
-                  msg.role === "assistant"
-                    ? "bg-indigo-50/70 backdrop-blur-sm border border-indigo-100/40"
-                    : "bg-white/60 backdrop-blur-sm border border-white/60"
-                }`}
+                className="dialogue" data-role={msg.role}
               >
                 <p className="text-xs text-slate-400 mb-1">
                   {msg.role === "assistant" ? "深处的回声" : "你"}

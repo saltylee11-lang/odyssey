@@ -14,11 +14,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: "/icons/icon.svg",
-    apple: "/icons/icon.svg",
+    apple: "/icons/icon-180.png",
   },
 };
 
 export const viewport = {
+  themeColor: "#183947",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

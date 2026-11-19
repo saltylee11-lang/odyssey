@@ -4,8 +4,8 @@
   "description": "通过 AI 对话，记录和探索你人生的每一个想法",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f0f4ff",
-  "theme_color": "#6366f1",
+  "background_color": "#f7f6f0",
+  "theme_color": "#183947",
   "orientation": "portrait",
   "icons": [
     {

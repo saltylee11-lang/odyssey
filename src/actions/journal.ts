@@ -167,14 +167,16 @@ export async function getEntryWithMessages(id: string) {
     .eq("user_id", userId)
     .single();
 
-  if (error || !entry) return null;
+  if (error && error.code !== "PGRST116") throw new Error("无法读取日记");
+  if (!entry) return null;
 
-  const { data: messages } = await supabase
+  const { data: messages, error: messageError } = await supabase
     .from("ai_messages")
     .select("*")
     .eq("entry_id", id)
     .order("sequence", { ascending: true });
 
+  if (messageError) throw new Error("无法读取对话");
   return { ...mapEntry(entry), messages: messages ?? [] };
 }
 

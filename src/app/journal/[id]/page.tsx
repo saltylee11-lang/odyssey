@@ -48,24 +48,22 @@ export default function JournalDetail() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const [loadFailure, setLoadFailure] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
+    let active = true;
     setMounted(true);
+    setLoading(true);
+    setLoadFailure(false);
     setApiKey(localStorage.getItem("odyssey_api_key") ?? "");
-    loadEntry();
-  }, [params.id]);
-
-  async function loadEntry() {
-    try {
-      const data = await getEntryWithMessages(params.id as string);
-      if (!data) { router.push("/dashboard"); return; }
+    getEntryWithMessages(params.id as string).then(data => {
+      if (!active) return;
       setEntry(data);
-      setMessages((data as any).messages ?? []);
-    } catch {
-      router.push("/dashboard");
-    } finally {
-      setLoading(false);
-    }
-  }
+      setMessages(data?.messages ?? []);
+    }).catch(() => { if (active) setLoadFailure(true); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [params.id, attempt]);
 
   async function handleContinueChat() {
     if (!chatInput.trim() || !apiKey || !entry) return;
@@ -157,20 +155,23 @@ export default function JournalDetail() {
     );
   }
 
-  if (!entry) return null;
+  if (loadFailure || !entry) return <main className="today-page">
+    <h1 className="journal-title">{loadFailure ? "日记暂时无法读取" : "未找到这篇日记"}</h1>
+    {loadFailure && <Button variant="secondary" onClick={() => setAttempt(n => n + 1)}>重试</Button>}
+    <Link href="/timeline" className="guided-link m-3">返回时间轴 →</Link>
+  </main>;
 
   return (
     <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
 
-      <h1 className="journal-title">第 {entry.dayNumber} 天的记录</h1>
+      <header className="section-heading detail-heading"><h1>第 {entry.dayNumber} 天</h1><Link href={`/timeline?day=${entry.dayNumber}`}>查看当天 →</Link></header>
       <p className="text-sm text-slate-500 mb-6">
         {format(new Date(entry.createdAt as string | Date), "yyyy年M月d日 HH:mm", { locale: zhCN })}
       </p>
 
       {/* Content */}
       <GlassCard className="p-4 mb-4">
-        <p className="text-xs text-slate-400 mb-2">你的记录：</p>
-        <p className="text-base whitespace-pre-wrap leading-relaxed">{entry.content}</p>
+        <p className="journal-prose">{entry.content}</p>
       </GlassCard>
 
       {/* AI conversation */}
@@ -179,14 +180,11 @@ export default function JournalDetail() {
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`p-4 mb-4 backdrop-blur-sm rounded-2xl border ${
-                msg.role === "assistant"
-                  ? "bg-indigo-50/60 border-indigo-100/50"
-                  : "bg-emerald-50/60 border-emerald-100/50"
-              }`}
+              data-role={msg.role} className="dialogue mb-4"
+
             >
-              <p className={`text-xs mb-2 ${msg.role === "assistant" ? "text-indigo-400" : "text-emerald-500"}`}>
-                {msg.role === "assistant" ? "深处的回声：" : "你的回应："}
+              <p className={`text-xs mb-2 ${msg.role === "assistant" ? "text-indigo-400" : "text-slate-500"}`}>
+                {msg.role === "assistant" ? "深处的回声" : "你"}
               </p>
               <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
             </div>
@@ -196,7 +194,7 @@ export default function JournalDetail() {
 
       {/* Summary */}
       <GlassCard className="p-4 mb-6">
-        <p className="text-xs text-slate-400 mb-1">思考摘要：</p>
+        <p className="text-xs text-slate-400 mb-1">思考摘要</p>
         {editingSummary ? (
           <div className="flex flex-col gap-2">
             <Input

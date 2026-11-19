@@ -34,12 +34,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none">
         {toasts.map((t) => (
           <div
+            role={t.type === "error" ? "alert" : "status"}
             key={t.id}
             className={cn(
-              "px-4 py-2.5 rounded-xl text-sm shadow-lg backdrop-blur-xl border animate-in slide-in-from-bottom-2 fade-in pointer-events-auto",
-              t.type === "success" && "bg-emerald-500/90 text-white border-emerald-400",
-              t.type === "error" && "bg-red-500/90 text-white border-red-400",
-              t.type === "info" && "bg-slate-800/90 text-white border-slate-700"
+              "px-4 py-2.5 rounded-md text-sm shadow-md border text-white",
+              t.type === "success" && "bg-[#345d53] border-[#345d53]",
+              t.type === "error" && "bg-[#8a453c] border-[#8a453c]",
+              t.type === "info" && "bg-slate-800 border-slate-700"
             )}
           >
             {t.message}

@@ -1,11 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#6366f1"/>
-      <stop offset="100%" style="stop-color:#818cf8"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
-  <text x="256" y="240" text-anchor="middle" fill="white" font-size="200" font-family="sans-serif" font-weight="300">奥</text>
-  <text x="256" y="380" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="48" font-family="sans-serif">寻找归途</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="#183947"/><g fill="none" stroke="#f7f6f0" stroke-linecap="round" transform="translate(256 256)"><path d="M0-153V153M-153 0H153" stroke-width="12"/><path d="M-94-94L94 94M94-94L-94 94" stroke-width="10"/></g><circle cx="256" cy="256" r="14" fill="#f7f6f0"/></svg>

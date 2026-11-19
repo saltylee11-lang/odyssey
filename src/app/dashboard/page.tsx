@@ -1,20 +1,22 @@
+import { Avatar } from "@/components/ui/Avatar";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getProfile, daysAlive } from "@/actions/profile";
+import { DayNumber } from "./DayNumber";
+import { getProfile } from "@/actions/profile";
 import { getEntries } from "@/actions/journal";
 import { GuidedLink } from "./GuidedLink";
 
 export default async function Dashboard() {
   const profile = await getProfile();
   if (!profile) redirect("/");
-  const [days, entries] = await Promise.all([daysAlive(profile.birthdate), getEntries(3)]);
+  const entries = await getEntries(3);
   return (
     <main className="today-page">
-      <header className="today-heading"><h1>今日手记</h1><span>{profile.name} 的日记本</span></header>
+      <header className="today-heading"><h1>今日手记</h1><Link href="/settings" className="owner-link" aria-label={`打开 ${profile.name} 的个人设置`}><Avatar name={profile.name} photo={profile.avatar} /><span>{profile.name} 的日记本</span></Link></header>
       <section className="today-cover">
         <div className="today-text">
           <p className="day-label">今天，是你在世上的</p>
-          <h2>第 <strong>{days.toLocaleString("en-US")}</strong> 天</h2>
+          <h2>第 <DayNumber birthdate={profile.birthdate} /> 天</h2>
           <div className="today-actions">
             <Link className="ink-button" href="/journal/new">写日记 <span aria-hidden="true">↗</span></Link>
             <GuidedLink />
