@@ -6,7 +6,7 @@ import { Brand } from "./Brand";
 
 const items = [
   ["/dashboard", "今天"], ["/journal/new", "写日记"], ["/timeline", "时间轴"],
-  ["/search", "搜索"], ["/settings", "设置"],
+  ["/search", "航海图"], ["/settings", "设置"],
 ];
 
 export function BottomNav() {
@@ -15,7 +15,7 @@ export function BottomNav() {
   return <header className="app-bar">
     <Link href="/dashboard" className="nav-brand" aria-label="奥德赛首页"><Brand /></Link>
     <nav aria-label="日记本导航">{items.map(([href, label]) => (
-      <Link key={href} href={href} aria-current={path === href ? "page" : undefined}>{label}</Link>
+      <Link key={href} href={href} prefetch={href === "/search" ? false : undefined} aria-current={path === href ? "page" : undefined}>{label}</Link>
     ))}</nav>
   </header>;
 }

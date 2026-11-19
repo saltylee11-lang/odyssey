@@ -1,0 +1,39 @@
+.page { width: min(780px, calc(100% - 40px)); margin: clamp(28px, 5vh, 60px) auto 100px; }
+.page h1 { text-align: center; margin: 0; }
+.selection { text-align: center; margin: 22px auto 0; }
+.day { color: var(--ink); font: 500 clamp(48px, 5vw, 64px)/1.08 Georgia, serif; letter-spacing: -.045em; font-variant-numeric: lining-nums tabular-nums; }
+.date { color: var(--muted); font-size: 14px; margin-top: 6px; }
+.jump { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 17px; color: var(--muted); font-size: 13px; }
+.jump input { width: 64px; height: 34px; padding: 0 5px; text-align: center; background: #fffdf8; color: var(--ink); border: 1px solid var(--line); border-radius: 5px; appearance: textfield; }
+.jump input::-webkit-inner-spin-button, .jump input::-webkit-outer-spin-button { appearance: none; }
+.jump button { padding: 7px 6px; color: #325966; }
+.jump button:hover, .empty a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.ruler { position: relative; height: 82px; margin: 22px auto 0; }
+.scroller { width: 100%; height: 100%; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; overflow-anchor: none; }
+.scroller::-webkit-scrollbar { display: none; }
+.track { display: flex; justify-content: center; height: 100%; overflow: clip; }
+.scale { position: relative; flex: none; height: 100%; }
+.indicator { position: absolute; pointer-events: none; z-index: 1; left: 50%; top: 4px; bottom: 22px; width: 1px; transform: translateX(-50%); background: #406976; }
+.indicator::before { content: ""; position: absolute; left: 50%; top: -1px; width: 5px; height: 5px; border-radius: 50%; transform: translateX(-50%); background: var(--ink); }
+.tick { position: absolute; bottom: 26px; width: 0; }
+.tick i { position: absolute; bottom: 0; left: 0; transform: translateX(-50%); width: 2px; height: 17px; border-radius: 2px; background: #b9c5c1; }
+.tick[data-entry=true] i { height: 28px; background: #709399; }
+.tick[data-today=true] i { background: #456a73; }
+.tick[data-selected=true] i { background: var(--ink); width: 3px; }
+.tick span { position: absolute; top: 6px; transform: translateX(-50%); font: 11px/1.2 var(--font-sans); color: #647672; font-variant-numeric: tabular-nums; }
+.entries { margin: 18px auto 0; max-width: 680px; display: grid; justify-items: start; gap: 14px; }
+.card { display: block; width: fit-content; min-width: 0; max-width: 100%; padding: clamp(17px, 3vw, 28px); border: 1px solid #d7dbd2; border-radius: 9px; background: #fffef9; }
+.card:hover { border-color: #9eafaa; }
+.body, .summary { white-space: pre-wrap; overflow-wrap: anywhere; }
+.body { font-size: clamp(17px, 2vw, 20px); line-height: 1.85; color: #263f43; }
+.summary { margin-bottom: 10px; font: 600 17px/1.7 var(--display); }
+.card time { display: block; font-size: 13px; color: var(--muted); margin-top: 12px; font-variant-numeric: tabular-nums; }
+.empty { width: 100%; text-align: center; color: var(--muted); padding: 26px 0; font-size: 15px; }
+.empty a, .empty button { display: inline-block; margin-top: 8px; color: var(--ink); }
+@media (max-width: 700px) {
+  .page { margin-top: 24px; }
+  .selection { margin-top: 15px; }
+  .jump input { font-size: 16px; }
+  .ruler { margin-top: 16px; }
+  .entries { margin-top: 10px; }
+}

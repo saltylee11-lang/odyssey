@@ -30,6 +30,7 @@ export async function createEntry(content: string, tags: string[], birthdate: st
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard");
   revalidatePath("/timeline");
+  revalidatePath("/search");
   return data as { id: string };
 }
 
@@ -72,6 +73,7 @@ export async function createEntryWithAI(
 
   revalidatePath("/dashboard");
   revalidatePath("/timeline");
+  revalidatePath("/search");
   return { id, messagesSaved: !messageError };
 }
 
@@ -124,6 +126,23 @@ export async function getEntries(limit = 20, offset = 0) {
   return (data ?? []).map(mapEntry);
 }
 
+export async function getAllEntries() {
+  const userId = await getUserId();
+  const db = await getSupabaseServer();
+  const entries: ReturnType<typeof mapEntry>[] = [];
+  let cursor: string | undefined;
+  while (true) {
+    let query = db.from("journal_entries").select("*").eq("user_id", userId).order("id").limit(500);
+    if (cursor) query = query.gt("id", cursor);
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    entries.push(...data.map(mapEntry));
+    if (data.length < 500) break;
+    cursor = data[data.length - 1].id;
+  }
+  return entries.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+}
+
 export async function getEntry(id: string) {
   const userId = await getUserId();
   const supabase = await getSupabaseServer();
@@ -171,9 +190,19 @@ export async function deleteEntry(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard");
   revalidatePath("/timeline");
+  revalidatePath("/search");
 }
 
 export async function searchEntries(query: string, tags: string[] = []) {
+  // PostgREST translates wildcards even in a quoted pattern. Match these literally.
+  if (/[\\%*_]/.test(query)) {
+    const term = query.toLowerCase();
+    const entries = await getAllEntries();
+    return entries.filter(entry =>
+      (entry.content.toLowerCase().includes(term) || entry.summary?.toLowerCase().includes(term)) &&
+      (!tags.length || tags.some(tag => entry.tags.includes(tag)))
+    ).slice(0, 20);
+  }
   const userId = await getUserId();
   const supabase = await getSupabaseServer();
 
@@ -185,7 +214,8 @@ export async function searchEntries(query: string, tags: string[] = []) {
     .limit(20);
 
   if (query) {
-    q = q.or(`content.ilike.%${query}%,summary.ilike.%${query}%`);
+    const pattern = `"%${query.replaceAll('"', '\\"')}%"`;
+    q = q.or(`content.ilike.${pattern},summary.ilike.${pattern}`);
   }
 
   if (tags.length > 0) {

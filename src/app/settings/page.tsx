@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/auth/client";
 import { getProfile, updateProfile } from "@/actions/profile";
-import { getEntries } from "@/actions/journal";
+import { getAllEntries } from "@/actions/journal";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -23,6 +23,8 @@ export default function Settings() {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [entryCount, setEntryCount] = useState(0);
+  const [importStatus, setImportStatus] = useState("");
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -33,8 +35,9 @@ export default function Settings() {
         const { data } = await supabase.auth.getUser();
         setProfile({ ...profile, email: data.user?.email ?? "" });
         setName(profile.name);
-        const entries = await getEntries(100000);
-        setEntryCount(entries.length);
+        const { count, error } = await supabase.from("journal_entries").select("id", { count: "exact", head: true }).eq("user_id", profile.id);
+        if (error) throw error;
+        setEntryCount(count ?? 0);
       } catch {
         router.push("/");
       } finally {
@@ -67,8 +70,7 @@ export default function Settings() {
 
   async function handleExport() {
     try {
-      const { getEntries } = await import("@/actions/journal");
-      const entries = await getEntries(10000);
+      const entries = await getAllEntries();
       const data = { profile, entries };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -84,22 +86,30 @@ export default function Settings() {
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const data = JSON.parse(reader.result as string);
-        // Only import entries, profile is handled by Supabase
-        if (data.entries) {
-          const { importLocalData } = await import("@/actions/migration");
-          await importLocalData(data.profile ?? profile, data.entries);
-          toast("导入成功", "success");
-          window.location.reload();
-        }
-      } catch {
-        toast("文件格式不正确", "error");
+    e.target.value = "";
+    setImporting(true);
+    setImportStatus("正在读取导入文件…");
+    try {
+      const data = JSON.parse(await file.text());
+      if (data.format === "ibetter-presence-v1") {
+        const { importPresence } = await import("@/lib/import-presence");
+        const result = await importPresence(supabase, data);
+        setImportStatus(`已核对 ${result.verified} 篇「存在」日记，本次新增 ${result.inserted} 篇。`);
+        const { count } = await supabase.from("journal_entries").select("id", { count: "exact", head: true });
+        if (count !== null) setEntryCount(count);
+      } else if (Array.isArray(data.entries)) {
+        const { importLocalData } = await import("@/actions/migration");
+        await importLocalData(data.profile ?? profile, data.entries);
+        toast("导入成功", "success");
+        window.location.reload();
+      } else {
+        throw Error("文件格式不正确");
       }
-    };
-    reader.readAsText(file);
+    } catch (error) {
+      setImportStatus(error instanceof Error ? error.message : "导入失败");
+    } finally {
+      setImporting(false);
+    }
   }
 
   if (loading || !profile) {
@@ -160,12 +170,13 @@ export default function Settings() {
           <p className="text-sm text-slate-600">{entryCount} 条</p>
         </div>
 
+        {importStatus && <p role="status" className="px-4 py-2 text-sm">{importStatus}</p>}
         <div className="p-4 border-b border-slate-200/40 flex items-center justify-between">
           <span className="text-xs text-emerald-500">✓ 云端</span>
           <span className="flex gap-4">
             <button onClick={handleExport} className="text-xs text-indigo-400 hover:text-indigo-600 cursor-pointer">导出</button>
             <label className="text-xs text-indigo-400 hover:text-indigo-600 cursor-pointer">
-              导入<input type="file" accept=".json" className="hidden" onChange={handleImport} />
+              导入<input type="file" disabled={importing} accept=".json" className="hidden" onChange={handleImport} />
             </label>
           </span>
         </div>
