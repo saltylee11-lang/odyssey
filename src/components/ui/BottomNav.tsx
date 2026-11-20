@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Brand } from "./Brand";
 
 const items = [
-  ["/dashboard", "今天"], ["/journal/new", "写日记"], ["/timeline", "时间轴"],
+  ["/dashboard", "当下"], ["/journal/new", "航海日志"], ["/timeline", "时间轴"],
   ["/search", "航海图"], ["/settings", "设置"],
 ];
 

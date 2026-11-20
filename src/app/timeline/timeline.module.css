@@ -31,7 +31,7 @@
 .empty { width: 100%; text-align: center; color: var(--muted); padding: 26px 0; font-size: 15px; }
 .empty a, .empty button { display: inline-block; margin-top: 8px; color: var(--ink); }
 @media (max-width: 700px) {
-  .page { margin-top: 24px; }
+  .page { margin-top: 24px; margin-bottom: var(--mobile-nav-clearance); }
   .selection { margin-top: 15px; }
   .jump input { font-size: 16px; }
   .ruler { margin-top: 16px; }

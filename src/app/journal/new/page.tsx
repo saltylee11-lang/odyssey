@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { differenceInCalendarDays, parseISO } from "date-fns";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import Link from "next/link";
 import { createEntry, createEntryWithAI } from "@/actions/journal";
 import { chatWithAI } from "@/lib/ai";
@@ -18,6 +18,7 @@ export default function NewJournal() {
   const { toast } = useToast();
 
   const [content, setContent] = useState("");
+  const paper = useRef<HTMLTextAreaElement>(null);
   const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -64,6 +65,14 @@ export default function NewJournal() {
     }).catch(() => router.push("/"));
     return () => { cancelled = true; clearTimeout(start); };
   }, [router]);
+
+  function insertTimestamp() {
+    const field = paper.current;
+    if (!field || field.readOnly) return;
+    field.setRangeText(format(new Date(), "yyyy-MM-dd HH:mm:ss"), field.selectionStart, field.selectionEnd, "end");
+    setContent(field.value);
+    field.focus({ preventScroll: true });
+  }
 
   async function saveRecord(text: string, messages: typeof chatMessages = []) {
     if (!text.trim() || !birthdate || saveLock.current) return;
@@ -165,7 +174,7 @@ export default function NewJournal() {
 
   return (
     <main className="flex-1 flex flex-col p-6 pb-24 max-w-lg mx-auto w-full">
-      <PageHeader title={mode === "guided" ? "深入对话" : "写日记"} />
+      <PageHeader title={mode === "guided" ? "深入对话" : "航海日志"} />
       {dayOverride && (
         <p className="text-xs text-slate-400 text-center -mt-2 mb-3">
           记录在第 {dayOverride} 天
@@ -183,7 +192,7 @@ export default function NewJournal() {
                 <>
                   {!apiKey && <Link className="guided-link" href="/settings#ai">去设置密钥 →</Link>}
 
-                  <button onClick={() => { setMode("normal"); setError(""); }} className="text-xs text-indigo-400 hover:text-indigo-600 cursor-pointer">回到写日记</button>
+                  <button onClick={() => { setMode("normal"); setError(""); }} className="text-xs text-indigo-400 hover:text-indigo-600 cursor-pointer">回到航海日志</button>
                 </>
               )}
             </div>
@@ -239,8 +248,15 @@ export default function NewJournal() {
         <div className="flex-1 flex flex-col">
           <div className="writing-paper">
             <div className="paper-meta"><span>{dayOverride ? `第 ${dayOverride} 天` : "今日记录"}</span><span>{Array.from(content.trim()).length} 字</span></div>
-            <textarea aria-label="日记正文" value={content} readOnly={saving || loading}
+            <textarea ref={paper} aria-label="日记正文" value={content} readOnly={saving || loading}
               onChange={(e) => setContent(e.target.value)} placeholder="今天，哪件小事还留在你心里？" />
+            <div className="paper-tools">
+              <button type="button" disabled={saving || loading} onClick={insertTimestamp}>
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true">
+                  <circle cx="10" cy="10" r="7.5" /><path d="M10 5.5v5l3 1.5" />
+                </svg>时间戳
+              </button>
+            </div>
           </div>
           <div className="flex gap-3 mt-4">
             <Button onClick={() => saveRecord(content)} disabled={saving || loading || !content.trim() || !birthdate} className="flex-1">
@@ -250,7 +266,7 @@ export default function NewJournal() {
               {loading ? "思考中..." : "深入聊聊"}
             </Button>}
           </div>
-          <Link href="/dashboard" className="text-center text-xs text-slate-300 hover:text-slate-400 mt-6 py-2">
+          <Link href="/timeline" className="text-center text-sm text-slate-500 hover:text-slate-700 mt-4 py-3">
             返回今天
           </Link>
         </div>

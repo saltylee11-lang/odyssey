@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/auth/client";
 import Image from "next/image";
+import { ArrowUpRight } from "@/components/ui/ArrowUpRight";
 
 
 export default function Home() {
@@ -137,7 +138,7 @@ export default function Home() {
       <header className="sea-masthead"><span>奥德赛</span><span className="masthead-separator" /><span>个人反思日记</span></header>
       <section className="sea-entry">
         <div><h1 lang="en">Odyssey</h1><p>在这里，和自己待一会儿。</p></div>
-        <button className="open-journal" onClick={() => dialog.current?.showModal()}>打开日记本 <span aria-hidden="true">↗</span></button>
+        <button className="open-journal" onClick={() => dialog.current?.showModal()}>打开日记本 <ArrowUpRight /></button>
       </section>
       <dialog ref={dialog} className="auth-dialog" aria-labelledby="auth-title">
         <button className="dialog-close" type="button" aria-label="关闭登录窗口" onClick={() => dialog.current?.close()}>×</button>

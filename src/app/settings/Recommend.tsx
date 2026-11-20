@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ArrowUpRight } from '@/components/ui/ArrowUpRight';
 import styles from './settings.module.css';
 
 const homepage = 'https://odyssey-moonlit.netlify.app/';
@@ -29,7 +30,7 @@ export function Recommend() {
   return <section className={styles.section} aria-labelledby="about-odyssey">
     <h2 id="about-odyssey">关于奥德赛</h2>
     <div className={styles.panel}>
-      <button type="button" className={styles.secondary} onClick={share}>推荐给朋友 <span aria-hidden="true">↗</span></button>
+      <button type="button" className={styles.secondary} onClick={share}>推荐给朋友 <ArrowUpRight /></button>
       <p role="status">{feedback}</p>
       {manual && <label className={styles.shareLink}>复制这个首页链接发给朋友
         <span className={styles.inline}><input aria-label="奥德赛首页链接" readOnly value={homepage} onFocus={e => e.currentTarget.select()} /></span>

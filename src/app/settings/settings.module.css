@@ -33,7 +33,7 @@
 .dataTitle span, .keyState { font-size: 13px; color: var(--muted); }
 .footer { padding: 16px 0; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 13px; }
 @media (max-width: 700px) {
- .page { width: calc(100% - 40px); margin: 27px auto calc(82px + env(safe-area-inset-bottom)); }
+ .page { width: calc(100% - 40px); margin: 27px auto var(--mobile-nav-clearance); }
  .section { grid-template-columns: minmax(0, 1fr); gap: 13px; padding: 22px 0; }
  .identity :global(.profile-avatar) { width: 64px; height: 64px; }
 }
